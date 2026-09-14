@@ -1,0 +1,32 @@
+{
+  "startFullScreen": false,
+  "startMinimized": false,
+  "closeToTray": true,
+  "trayIconEnabled": true,
+  "disableNotifications": false,
+  "disableNotificationSound": false,
+  "disableNotificationWindowFlash": false,
+  "defaultService": "word",
+  "theme": "system",
+  "zoomFactor": 1.0,
+  "userAgent": "",
+  "customCSS": "",
+  "autoUpdate": true,
+  "proxy": "",
+  "partition": "persist:ms365-linux",
+  "windowWidth": 1280,
+  "windowHeight": 800,
+  "windowMinWidth": 800,
+  "windowMinHeight": 600,
+  "disableGpu": false,
+  "autoStart": false,
+  "openDownloadsWhenDone": false,
+  "globalShortcuts": {
+    "toggleWindow": "Ctrl+Shift+M",
+    "switchToWord": "Ctrl+Shift+1",
+    "switchToExcel": "Ctrl+Shift+2",
+    "switchToPowerPoint": "Ctrl+Shift+3",
+    "switchToOneDrive": "Ctrl+Shift+4",
+    "switchToOneNote": "Ctrl+Shift+5"
+  }
+}

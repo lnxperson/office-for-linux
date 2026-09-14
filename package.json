@@ -1,0 +1,103 @@
+{
+  "name": "ms365-linux",
+  "productName": "MS365 for Linux",
+  "version": "1.0.0",
+  "description": "Unofficial Microsoft 365 desktop client for Linux",
+  "main": "app/index.js",
+  "desktopName": "ms365-linux.desktop",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:deb": "electron-builder --linux deb",
+    "build:rpm": "electron-builder --linux rpm",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:arch": "node scripts/build-arch.js",
+    "build:all": "npm run build:deb && npm run build:rpm && npm run build:arch"
+  },
+  "author": {
+    "name": "lnxperson",
+    "email": "lnxperson@users.noreply.github.com"
+  },
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/lnxperson/ms365-for-linux",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lnxperson/ms365-for-linux.git"
+  },
+  "dependencies": {
+    "dbus-native": "^0.15.2",
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.9",
+    "electron-window-state": "^5.0.3",
+    "yargs": "^17.7.3"
+  },
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.ms365.linux",
+    "productName": "MS365 for Linux",
+    "copyright": "Copyright © 2026 lnxperson",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/sounds",
+        "to": "sounds"
+      },
+      {
+        "from": "assets/tray",
+        "to": "tray"
+      }
+    ],
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "AppImage"
+      ],
+      "category": "Office",
+      "icon": "assets/icons",
+      "mimeTypes": [
+        "x-scheme-handler/ms365"
+      ],
+      "executableName": "ms365-linux",
+      "syncDesktopName": true,
+      "synopsis": "Unofficial Microsoft 365 desktop client for Linux",
+      "description": "Unofficial Microsoft 365 desktop client for Linux wrapping the M365 web applications (Word, Excel, PowerPoint, OneDrive, OneNote) with native desktop integration."
+    },
+    "deb": {
+      "depends": [
+        "libnotify4",
+        "libxtst6",
+        "libnss3",
+        "libxss1",
+        "libasound2",
+        "libgbm1",
+        "xdg-utils"
+      ],
+      "priority": "optional"
+    },
+    "rpm": {
+      "depends": [
+        "libnotify",
+        "libXtst",
+        "nss",
+        "libXScrnSaver",
+        "alsa-lib",
+        "libgbm",
+        "xdg-utils"
+      ]
+    },
+    "appImage": {
+      "license": "README.md"
+    }
+  }
+}
