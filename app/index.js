@@ -58,6 +58,9 @@ if (!gotTheLock) {
     const profiles = new ProfilesManager(config);
     await profiles.initialize();
 
+    const activeProfile = profiles.getActive();
+    const sessionPartition = activeProfile ? activeProfile.partition : config.get('partition');
+
     const notificationService = new NotificationService(config);
     const screenSharingService = new ScreenSharingService();
     const downloadManager = new DownloadManager(config);
@@ -74,14 +77,30 @@ if (!gotTheLock) {
       screenSharingService,
       downloadManager,
       themeManager,
-      dbusService
+      dbusService,
+      initialPartition: sessionPartition
     });
 
     tray = new SystemTray(config, mainWindow, profiles);
     mainWindow.setTray(tray);
 
-    downloadManager.attachToSession(session.fromPartition(config.get('partition')));
+    downloadManager.attachToSession(session.fromPartition(sessionPartition));
     downloadManager.setMainWindow(mainWindow);
+
+    let flushed = false;
+    app.on('before-quit', (event) => {
+      if (flushed) return;
+      event.preventDefault();
+      flushed = true;
+      const partition = profiles.getActive() ? profiles.getActive().partition : config.get('partition');
+      session.fromPartition(partition)
+        .flushStorageData()
+        .then(() => app.quit())
+        .catch((err) => {
+          log.warn('Failed to flush session storage:', err);
+          app.quit();
+        });
+    });
 
     notificationService.setClickHandler(() => {
       if (mainWindow) mainWindow.show();

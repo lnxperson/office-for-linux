@@ -13,7 +13,8 @@ class MainAppWindow {
     this.currentService = null;
     this.tray = null;
 
-    this.createWindow();
+    const initialPartition = deps.initialPartition || null;
+    this.createWindow(initialPartition);
   }
 
   setTray(tray) {
