@@ -42,6 +42,22 @@ class DbusService {
 
     const kde = this.bus.getService('org.kde.JobViewServer');
     this.capabilities.kdeJobView = Boolean(kde);
+
+    const watcher = this.bus.getService('org.kde.StatusNotifierWatcher');
+    watcher.getInterface('/StatusNotifierWatcher', 'org.kde.StatusNotifierWatcher', (err) => {
+      this.capabilities.statusNotifier = !err;
+      if (err) {
+        const desktop = String(process.env.XDG_CURRENT_DESKTOP || '');
+        log.warn(`No StatusNotifierWatcher on the session bus (desktop: ${desktop || 'unknown'}).`);
+        if (desktop.includes('GNOME')) {
+          log.warn('GNOME hides tray icons by default. Install and enable the "AppIndicator and KStatusNotifierItem" extension (package: gnome-shell-extension-appindicator) to show the Office for Linux tray icon.');
+        } else {
+          log.warn('The tray icon needs a StatusNotifier host (KDE Plasma, GNOME + AppIndicator extension, etc.).');
+        }
+      } else {
+        log.info('StatusNotifierWatcher found — system tray (AppIndicator/KStatusNotifierItem) available.');
+      }
+    });
   }
 
   setBadgeCount(count) {

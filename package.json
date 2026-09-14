@@ -1,7 +1,7 @@
 {
   "name": "office-for-linux",
   "productName": "Office for Linux",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Unofficial Microsoft 365 desktop client for Linux",
   "main": "app/index.js",
   "desktopName": "office-for-linux.desktop",
@@ -81,6 +81,7 @@
         "libxss1",
         "libasound2",
         "libgbm1",
+        "libayatana-appindicator3-1",
         "xdg-utils"
       ],
       "priority": "optional"
@@ -93,6 +94,7 @@
         "libXScrnSaver",
         "alsa-lib",
         "libgbm",
+        "libayatana-appindicator",
         "xdg-utils"
       ]
     },

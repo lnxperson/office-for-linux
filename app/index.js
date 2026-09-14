@@ -144,6 +144,10 @@ if (!gotTheLock) {
       return profiles.getActive();
     });
 
+    ipcMain.handle('get-active-service', () => {
+      return mainWindow ? mainWindow.currentService : config.get('defaultService');
+    });
+
     ipcMain.handle('switch-profile', async (event, profileId) => {
       await profiles.switchTo(profileId);
       const profile = profiles.getActive();

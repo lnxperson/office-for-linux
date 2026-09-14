@@ -5,6 +5,7 @@ const electronAPI = {
   getConfig: () => ipcRenderer.invoke('get-config'),
   getProfiles: () => ipcRenderer.invoke('get-profiles'),
   getActiveProfile: () => ipcRenderer.invoke('get-active-profile'),
+  getActiveService: () => ipcRenderer.invoke('get-active-service'),
   switchProfile: (profileId) => ipcRenderer.invoke('switch-profile', profileId),
   showNotification: (title, body, urgency) => {
     ipcRenderer.send('show-notification', { title, body, urgency });
