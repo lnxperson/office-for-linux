@@ -81,8 +81,10 @@
         "libxss1",
         "libasound2",
         "libgbm1",
-        "libayatana-appindicator3-1",
         "xdg-utils"
+      ],
+      "recommends": [
+        "libayatana-appindicator3-1"
       ],
       "priority": "optional"
     },
@@ -94,7 +96,6 @@
         "libXScrnSaver",
         "alsa-lib",
         "libgbm",
-        "libayatana-appindicator",
         "xdg-utils"
       ]
     },

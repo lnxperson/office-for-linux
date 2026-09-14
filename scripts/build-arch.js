@@ -69,7 +69,7 @@ if (fs.existsSync(iconDir)) {
 }
 
 const makedeps = "'nodejs' 'npm'";
-const optdeps = "'libnotify: Desktop notifications' 'libxcrypt-compat: libcrypt.so.1 for Electron' 'gnome-shell-extension-appindicator: System tray on GNOME Shell'";
+const optdeps = "'libayatana-appindicator: System tray icon support (fallback)' 'libnotify: Desktop notifications' 'libxcrypt-compat: libcrypt.so.1 for Electron' 'gnome-shell-extension-appindicator: System tray on GNOME Shell'";
 
 const PKGINFO = `# Maintainer: lnxperson <lnxperson@users.noreply.github.com>
 pkgname = ${name}
@@ -85,7 +85,6 @@ depends = libxss
 depends = libxtst
 depends = libgbm
 depends = alsa-lib
-depends = libayatana-appindicator
 depends = xdg-utils
 makedepends = ${makedeps}
 optdepends = ${optdeps}
