@@ -1,7 +1,7 @@
 {
   "name": "office-for-linux",
   "productName": "Office for Linux",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unofficial Microsoft 365 desktop client for Linux",
   "main": "app/index.js",
   "desktopName": "office-for-linux.desktop",
