@@ -1,4 +1,4 @@
-# MS365 for Linux — Project Plan
+# Office for Linux — Project Plan
 
 ## Overview
 
@@ -39,7 +39,7 @@ Single Electron app with a **service switcher sidebar** that loads different M36
 │  ├── AutoStart (XDG)                         │
 │  ├── DbusService (launcher entry, etc.)      │
 │  ├── ThemeManager (light/dark)               │
-│  ├── DeepLinkRouter (ms365:// protocol)      │
+│  ├── DeepLinkRouter (office:// protocol)      │
 │  └── AutoUpdater                             │
 ├─────────────────────────────────────────────┤
 │             Preload Script                    │
@@ -105,8 +105,8 @@ Single Electron app with a **service switcher sidebar** that loads different M36
 
 ### 1. App Configuration (`app/appConfiguration/`)
 
-- `index.js` — Loads config from CLI args (yargs) + `~/.config/ms365-linux/config.json`
-- Supports: `/etc/ms365-linux/config.json` (system-wide) + user config (overrides)
+- `index.js` — Loads config from CLI args (yargs) + `~/.config/office-for-linux/config.json`
+- Supports: `/etc/office-for-linux/config.json` (system-wide) + user config (overrides)
 - Config options documented in CONFIG.md
 
 ### 2. Main App Window (`app/mainAppWindow/`)
@@ -192,8 +192,8 @@ Injected via preload script. Renders a vertical sidebar on the left with:
 
 ### 14. Deep Linking (`app/modules/deepLink/`)
 
-- `ms365://` protocol registration
-- Handle links like `ms365://word/documentid`
+- `office://` protocol registration
+- Handle links like `office://word/documentid`
 - Route to correct service
 
 ### 15. Download Manager (`app/modules/downloads/`)
@@ -205,7 +205,7 @@ Injected via preload script. Renders a vertical sidebar on the left with:
 ## Directory Structure
 
 ```
-MS365 for Linux/
+Office for Linux/
 ├── PLAN.md                          # This file
 ├── package.json                     # Electron project config
 ├── electron-builder.yml             # Build/packaging config
@@ -333,18 +333,18 @@ MS365 for Linux/
   "customCSS": "",
   "autoUpdate": true,
   "proxy": "",
-  "partition": "persist:ms365-linux"
+  "partition": "persist:office-for-linux"
 }
 ```
 
 ## Key Differences from teams-for-linux
 
-| Aspect | teams-for-linux | MS365 for Linux |
+| Aspect | teams-for-linux | Office for Linux |
 |--------|----------------|-----------------|
 | Target | Microsoft Teams only | Full M365 suite |
 | Service switching | N/A (single service) | Sidebar with 5+ services |
 | URL | teams.microsoft.com | word/office.com, excel/office.com, etc. |
 | Sidebar | No | Yes — service switcher |
 | Profiles | Teams-specific | Cross-service profiles |
-| Deep links | msteams:// | ms365:// |
+| Deep links | msteams:// | office:// |
 | Default service | Teams | Word (configurable) |

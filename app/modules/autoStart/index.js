@@ -7,7 +7,7 @@ class AutoStart {
   constructor(config) {
     this.config = config;
     this.autostartDir = path.join(os.homedir(), '.config', 'autostart');
-    this.desktopFile = path.join(this.autostartDir, 'ms365-linux.desktop');
+    this.desktopFile = path.join(this.autostartDir, 'office-for-linux.desktop');
   }
 
   isEnabled() {
@@ -31,10 +31,10 @@ class AutoStart {
       const content = `[Desktop Entry]
 Type=Application
 Version=1.0
-Name=MS365 for Linux
+Name=Office for Linux
 Comment=Start Microsoft 365 client at login
 Exec="${execPath}" %U
-Icon=ms365-linux
+Icon=office-for-linux
 Hidden=false
 X-GNOME-Autostart-enabled=true
 `;

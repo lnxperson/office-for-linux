@@ -42,7 +42,7 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(async () => {
-    app.setAppUserModelId('com.ms365.linux');
+    app.setAppUserModelId('com.officeforlinux');
 
     UserAgent.set(config);
 

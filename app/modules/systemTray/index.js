@@ -30,7 +30,7 @@ class SystemTray {
 
     this.baseIcon = nativeImage.createFromPath(iconPath);
     this.tray = new Tray(this.baseIcon);
-    this.tray.setToolTip('MS365 for Linux');
+    this.tray.setToolTip('Office for Linux');
 
     this.tray.on('click', () => {
       this.mainWindow.toggle();
@@ -57,7 +57,7 @@ class SystemTray {
     }));
 
     menuItems.push({
-      label: 'Open MS365 for Linux',
+      label: 'Open Office for Linux',
       click: () => this.mainWindow.show()
     });
 
@@ -139,13 +139,13 @@ class SystemTray {
     }
 
     this.tray.setToolTip(this.badgeCount > 0
-      ? `MS365 for Linux (${this.badgeCount})`
-      : 'MS365 for Linux');
+      ? `Office for Linux (${this.badgeCount})`
+      : 'Office for Linux');
 
     if (this.mainWindow && this.mainWindow.window && process.platform !== 'darwin') {
       this.mainWindow.window.setOverlayIcon(
         count > 0 ? this.baseIcon : null,
-        count > 0 ? `MS365 for Linux (${count})` : ''
+        count > 0 ? `Office for Linux (${count})` : ''
       );
     }
   }

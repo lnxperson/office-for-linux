@@ -2,7 +2,7 @@ const { app, ipcMain } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 
-const PROTOCOL = 'ms365';
+const PROTOCOL = 'office';
 
 class DeepLinkRouter {
   constructor() {

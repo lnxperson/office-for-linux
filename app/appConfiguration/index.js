@@ -18,7 +18,7 @@ const DEFAULT_CONFIG = {
   customCSS: '',
   autoUpdate: true,
   proxy: '',
-  partition: 'persist:ms365-linux',
+  partition: 'persist:office-for-linux',
   windowWidth: 1280,
   windowHeight: 800,
   windowMinWidth: 800,
@@ -71,8 +71,8 @@ class AppConfiguration {
 
   loadFromFile() {
     const configDirs = [
-      path.join(require('electron').app.getPath('home'), '.config', 'ms365-linux'),
-      path.join('/etc', 'ms365-linux')
+      path.join(require('electron').app.getPath('home'), '.config', 'office-for-linux'),
+      path.join('/etc', 'office-for-linux')
     ];
 
     for (const dir of configDirs) {
@@ -90,7 +90,7 @@ class AppConfiguration {
     }
 
     if (!this.configPath) {
-      const userConfigDir = path.join(require('electron').app.getPath('home'), '.config', 'ms365-linux');
+      const userConfigDir = path.join(require('electron').app.getPath('home'), '.config', 'office-for-linux');
       this.configPath = path.join(userConfigDir, 'config.json');
     }
   }

@@ -37,7 +37,7 @@ class MainAppWindow {
       x: winState.x,
       y: winState.y,
       show: false,
-      title: 'MS365 for Linux',
+      title: 'Office for Linux',
       backgroundColor: '#1f2733',
       autoHideMenuBar: true,
       icon: assetPath('icons', 'icon.png'),
@@ -130,7 +130,7 @@ class MainAppWindow {
 
     log.info(`Loading service: ${service.id} -> ${url}`);
     this.window.loadURL(url);
-    this.window.setTitle(`${service.name} — MS365 for Linux`);
+    this.window.setTitle(`${service.name} — Office for Linux`);
   }
 
   show() {

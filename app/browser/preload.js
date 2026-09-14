@@ -49,7 +49,7 @@ globalThis.electronAPI = electronAPI;
 try {
   require('./tools');
 } catch (err) {
-  console.warn('[MS365] Failed to load browser tools:', err.message);
+  console.warn('[Office] Failed to load browser tools:', err.message);
 }
 
 module.exports = electronAPI;

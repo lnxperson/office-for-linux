@@ -3,9 +3,9 @@ let activeService = null;
 
 function injectCSS() {
   const style = document.createElement('style');
-  style.id = 'ms365-sidebar-style';
+  style.id = 'office-sidebar-style';
   style.textContent = `
-    #ms365-sidebar {
+    #office-sidebar {
       position: fixed;
       top: 0;
       left: 0;
@@ -22,11 +22,11 @@ function injectCSS() {
       overflow: hidden;
     }
 
-    #ms365-sidebar.expanded {
+    #office-sidebar.expanded {
       width: 200px;
     }
 
-    #ms365-sidebar-toggle {
+    #office-sidebar-toggle {
       background: none;
       border: none;
       color: white;
@@ -42,11 +42,11 @@ function injectCSS() {
       justify-content: center;
     }
 
-    #ms365-sidebar-toggle:hover {
+    #office-sidebar-toggle:hover {
       background: rgba(255,255,255,0.1);
     }
 
-    .ms365-service-btn {
+    .office-service-btn {
       background: none;
       border: none;
       cursor: pointer;
@@ -63,36 +63,36 @@ function injectCSS() {
       position: relative;
     }
 
-    .ms365-service-btn:hover {
+    .office-service-btn:hover {
       background: rgba(255,255,255,0.12);
     }
 
-    .ms365-service-btn.active {
+    .office-service-btn.active {
       background: rgba(255,255,255,0.18);
       outline: 2px solid #0078d4;
     }
 
-    .ms365-service-label {
+    .office-service-label {
       font-family: 'Segoe UI', 'Ubuntu', sans-serif;
       font-size: 12px;
       white-space: nowrap;
     }
 
-    .ms365-service-icon {
+    .office-service-icon {
       font-family: 'Segoe UI', 'Ubuntu', sans-serif;
       font-weight: 600;
       font-size: 16px;
       line-height: 1;
     }
 
-    #ms365-sidebar-footer {
+    #office-sidebar-footer {
       margin-top: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    #ms365-profile-btn {
+    #office-profile-btn {
       background: #0078d4;
       border: none;
       color: white;
@@ -107,11 +107,11 @@ function injectCSS() {
       margin: 8px 0;
     }
 
-    #ms365-profile-btn:hover {
+    #office-profile-btn:hover {
       filter: brightness(1.2);
     }
 
-    #ms365-settings-btn {
+    #office-settings-btn {
       background: none;
       border: none;
       color: rgba(255,255,255,0.8);
@@ -125,11 +125,11 @@ function injectCSS() {
       justify-content: center;
     }
 
-    #ms365-settings-btn:hover {
+    #office-settings-btn:hover {
       background: rgba(255,255,255,0.1);
     }
 
-    .ms365-tooltip {
+    .office-tooltip {
       position: fixed;
       background: #2f3a47;
       color: white;
@@ -143,11 +143,11 @@ function injectCSS() {
       transition: opacity 0.15s;
     }
 
-    .ms365-tooltip.visible {
+    .office-tooltip.visible {
       opacity: 1;
     }
 
-    .ms365-service-name {
+    .office-service-name {
       font-family: 'Segoe UI', 'Ubuntu', sans-serif;
       font-size: 16px;
       font-weight: 600;
@@ -166,7 +166,7 @@ function injectCSS() {
 
 function createTooltip() {
   const tooltip = document.createElement('div');
-  tooltip.className = 'ms365-tooltip';
+  tooltip.className = 'office-tooltip';
   document.body.appendChild(tooltip);
   return tooltip;
 }
@@ -199,11 +199,11 @@ function createSidebar(services, activeId, profiles) {
   }
 
   sidebar = document.createElement('div');
-  sidebar.id = 'ms365-sidebar';
+  sidebar.id = 'office-sidebar';
   activeService = activeId;
 
   const toggle = document.createElement('button');
-  toggle.id = 'ms365-sidebar-toggle';
+  toggle.id = 'office-sidebar-toggle';
   toggle.innerHTML = '☰';
   toggle.title = 'Toggle sidebar';
   toggle.onclick = () => {
@@ -213,18 +213,18 @@ function createSidebar(services, activeId, profiles) {
   sidebar.appendChild(toggle);
 
   const serviceName = document.createElement('div');
-  serviceName.className = 'ms365-service-name';
+  serviceName.className = 'office-service-name';
   serviceName.textContent = getServiceLabel(activeId);
   sidebar.appendChild(serviceName);
 
   for (const service of services) {
     const btn = document.createElement('button');
-    btn.className = 'ms365-service-btn';
+    btn.className = 'office-service-btn';
     btn.dataset.service = service.id;
     btn.title = service.name;
 
     const icon = document.createElement('span');
-    icon.className = 'ms365-service-icon';
+    icon.className = 'office-service-icon';
     icon.textContent = getServiceIcon(service.id);
     btn.appendChild(icon);
 
@@ -242,10 +242,10 @@ function createSidebar(services, activeId, profiles) {
   }
 
   const footer = document.createElement('div');
-  footer.id = 'ms365-sidebar-footer';
+  footer.id = 'office-sidebar-footer';
 
   const profileBtn = document.createElement('button');
-  profileBtn.id = 'ms365-profile-btn';
+  profileBtn.id = 'office-profile-btn';
   profileBtn.textContent = '👤';
   profileBtn.title = 'Profile';
   profileBtn.onclick = () => {
@@ -259,7 +259,7 @@ function createSidebar(services, activeId, profiles) {
   footer.appendChild(profileBtn);
 
   const settingsBtn = document.createElement('button');
-  settingsBtn.id = 'ms365-settings-btn';
+  settingsBtn.id = 'office-settings-btn';
   settingsBtn.textContent = '⚙';
   settingsBtn.title = 'Settings';
   settingsBtn.onclick = () => {
@@ -275,13 +275,13 @@ function createSidebar(services, activeId, profiles) {
 }
 
 function applyContentOffset() {
-  const styleEl = document.getElementById('ms365-sidebar-style');
+  const styleEl = document.getElementById('office-sidebar-style');
   if (styleEl) {
     styleEl.textContent = styleEl.textContent.replace(
-      /--ms365-sidebar-width:[^;]+;?/,
-      '--ms365-sidebar-width: 48px;'
+      /--office-sidebar-width:[^;]+;?/,
+      '--office-sidebar-width: 48px;'
     );
-    if (!styleEl.textContent.includes('--ms365-sidebar-offset')) {
+    if (!styleEl.textContent.includes('--office-sidebar-offset')) {
       styleEl.textContent += `
         body { margin-left: 48px; width: calc(100% - 48px); }
         html { overflow-x: hidden; }
@@ -291,7 +291,7 @@ function applyContentOffset() {
 }
 
 function showTooltip(event, text) {
-  let tooltip = document.querySelector('.ms365-tooltip');
+  let tooltip = document.querySelector('.office-tooltip');
   if (!tooltip) {
     tooltip = createTooltip();
   }
@@ -302,7 +302,7 @@ function showTooltip(event, text) {
 }
 
 function hideTooltip() {
-  const tooltip = document.querySelector('.ms365-tooltip');
+  const tooltip = document.querySelector('.office-tooltip');
   if (tooltip) {
     tooltip.classList.remove('visible');
   }
@@ -310,11 +310,11 @@ function hideTooltip() {
 
 function setActiveService(serviceId) {
   activeService = serviceId;
-  document.querySelectorAll('.ms365-service-btn').forEach((btn) => {
+  document.querySelectorAll('.office-service-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.service === serviceId);
   });
 
-  const serviceName = document.querySelector('.ms365-service-name');
+  const serviceName = document.querySelector('.office-service-name');
   if (serviceName) {
     serviceName.textContent = getServiceLabel(serviceId);
   }

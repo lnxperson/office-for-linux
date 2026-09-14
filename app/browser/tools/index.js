@@ -5,7 +5,7 @@ const titleObserver = require('./titleObserver');
 
 function init() {
   if (!window.electronAPI) {
-    console.warn('[MS365] electronAPI not available, tools not loaded');
+    console.warn('[Office] electronAPI not available, tools not loaded');
     return;
   }
 
@@ -13,19 +13,19 @@ function init() {
     try {
       sidebar.initSidebar();
     } catch (err) {
-      console.warn('[MS365] Sidebar init failed:', err);
+      console.warn('[Office] Sidebar init failed:', err);
     }
 
     try {
       theme.initTheme();
     } catch (err) {
-      console.warn('[MS365] Theme init failed:', err);
+      console.warn('[Office] Theme init failed:', err);
     }
 
     try {
       titleObserver.initialize();
     } catch (err) {
-      console.warn('[MS365] TitleObserver init failed:', err);
+      console.warn('[Office] TitleObserver init failed:', err);
     }
   };
 
@@ -38,7 +38,7 @@ function init() {
   try {
     zoom.initZoom();
   } catch (err) {
-    console.warn('[MS365] Zoom init failed:', err);
+    console.warn('[Office] Zoom init failed:', err);
   }
 }
 

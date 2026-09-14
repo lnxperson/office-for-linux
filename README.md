@@ -1,4 +1,4 @@
-# MS365 for Linux
+# Office for Linux
 
 Unofficial Microsoft 365 desktop client for Linux. Electron-based wrapper around the
 M365 web applications (Word, Excel, PowerPoint, OneDrive, OneNote) with full Linux
@@ -17,7 +17,7 @@ desktop environment integration.
 - **Auto-start:** XDG autostart support
 - **Themes:** light / dark / system theme
 - **Screen sharing:** WebRTC desktop capture for meetings
-- **Deep links:** `ms365://` protocol handler
+- **Deep links:** `office://` protocol handler
 - **Download manager:** progress tracking, open-when-done
 - **Proxy support:** manual or automatic proxy configuration
 - **Custom CSS & user agent**
@@ -47,8 +47,8 @@ npm run build:arch       # Arch Linux .pkg.tar.zst (requires makepkg)
 
 ## Configuration
 
-Configuration is read from `~/.config/ms365-linux/config.json` (user) and
-`/etc/ms365-linux/config.json` (system-wide). User config overrides system config.
+Configuration is read from `~/.config/office-for-linux/config.json` (user) and
+`/etc/office-for-linux/config.json` (system-wide). User config overrides system config.
 
 See `config.example.json` for all options.
 
@@ -117,7 +117,7 @@ app/
 │   ├── globalShortcuts/       # Global keyboard shortcuts
 │   ├── screenSharing/         # WebRTC screen capture
 │   ├── theme/                 # Theme management
-│   ├── deepLink/              # ms365:// protocol handler
+│   ├── deepLink/              # office:// protocol handler
 │   └── downloads/             # Download management
 └── services/                  # M365 service definitions
 ```

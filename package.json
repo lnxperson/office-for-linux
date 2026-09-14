@@ -1,10 +1,10 @@
 {
-  "name": "ms365-linux",
-  "productName": "MS365 for Linux",
+  "name": "office-for-linux",
+  "productName": "Office for Linux",
   "version": "1.0.0",
   "description": "Unofficial Microsoft 365 desktop client for Linux",
   "main": "app/index.js",
-  "desktopName": "ms365-linux.desktop",
+  "desktopName": "office-for-linux.desktop",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
@@ -19,10 +19,10 @@
     "email": "lnxperson@users.noreply.github.com"
   },
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/lnxperson/ms365-for-linux",
+  "homepage": "https://github.com/lnxperson/office-for-linux",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lnxperson/ms365-for-linux.git"
+    "url": "https://github.com/lnxperson/office-for-linux.git"
   },
   "dependencies": {
     "dbus-native": "^0.15.2",
@@ -36,8 +36,8 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.ms365.linux",
-    "productName": "MS365 for Linux",
+    "appId": "com.officeforlinux",
+    "productName": "Office for Linux",
     "copyright": "Copyright © 2026 lnxperson",
     "directories": {
       "output": "dist"
@@ -66,9 +66,9 @@
       "category": "Office",
       "icon": "assets/icons",
       "mimeTypes": [
-        "x-scheme-handler/ms365"
+        "x-scheme-handler/office"
       ],
-      "executableName": "ms365-linux",
+      "executableName": "office-for-linux",
       "syncDesktopName": true,
       "synopsis": "Unofficial Microsoft 365 desktop client for Linux",
       "description": "Unofficial Microsoft 365 desktop client for Linux wrapping the M365 web applications (Word, Excel, PowerPoint, OneDrive, OneNote) with native desktop integration."

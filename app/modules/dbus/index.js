@@ -2,8 +2,8 @@ const { app } = require('electron');
 const dbus = require('dbus-native');
 const log = require('electron-log');
 
-const DBUS_SERVICE_NAME = 'com.ms365.linux';
-const DBUS_OBJECT_PATH = '/com/ms365/linux';
+const DBUS_SERVICE_NAME = 'com.officeforlinux';
+const DBUS_OBJECT_PATH = '/com/officeforlinux';
 
 class DbusService {
   constructor() {
@@ -53,7 +53,7 @@ class DbusService {
       const unity = this.bus.getService('com.canonical.Unity');
       const iface = unity.getInterface('/com/canonical/Unity', 'com.canonical.Unity.LauncherEntry', (err, iface) => {
         if (err || !iface) return;
-        iface.SetProperty('application/ms365-linux', {
+        iface.SetProperty('application/office-for-linux', {
           'unity:launcher': {
             quicklist: [],
             progress: 0,

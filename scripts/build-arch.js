@@ -7,7 +7,7 @@ const path = require('path');
 const PROJECT = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT, 'package.json'), 'utf8'));
 const version = pkg.version;
-const name = 'ms365-linux';
+const name = 'office-for-linux';
 const arch = 'x86_64';
 const epoch = Math.floor(Date.now() / 1000);
 
@@ -22,7 +22,7 @@ fs.rmSync(pkgDir, { recursive: true, force: true });
 
 const dirs = [
   'usr/bin',
-  'usr/share/ms365-linux',
+  'usr/share/office-for-linux',
   'usr/share/applications',
   'usr/share/icons/hicolor/16x16/apps',
   'usr/share/icons/hicolor/24x24/apps',
@@ -36,26 +36,26 @@ const dirs = [
 dirs.forEach((d) => fs.mkdirSync(path.join(pkgDir, d), { recursive: true }));
 
 console.log('Copying app files...');
-execSync(`cp -r "${unpackedDir}"/* "${path.join(pkgDir, 'usr/share/ms365-linux')}/"`);
+execSync(`cp -r "${unpackedDir}"/* "${path.join(pkgDir, 'usr/share/office-for-linux')}/"`);
 
 const wrapperScript = `#!/bin/sh
-exec /usr/share/ms365-linux/ms365-linux "$@"
+exec /usr/share/office-for-linux/office-for-linux "$@"
 `;
-fs.writeFileSync(path.join(pkgDir, 'usr/bin/ms365-linux'), wrapperScript);
-fs.chmodSync(path.join(pkgDir, 'usr/bin/ms365-linux'), 0o755);
+fs.writeFileSync(path.join(pkgDir, 'usr/bin/office-for-linux'), wrapperScript);
+fs.chmodSync(path.join(pkgDir, 'usr/bin/office-for-linux'), 0o755);
 
 const desktopFile = `[Desktop Entry]
-Name=MS365 for Linux
+Name=Office for Linux
 Comment=Unofficial Microsoft 365 desktop client
-Exec=/usr/share/ms365-linux/ms365-linux %U
-Icon=ms365-linux
+Exec=/usr/share/office-for-linux/office-for-linux %U
+Icon=office-for-linux
 Type=Application
 Categories=Office;
 Keywords=office;365;word;excel;powerpoint;onedrive;onenote;
-MimeType=x-scheme-handler/ms365;
-StartupWMClass=ms365-linux
+MimeType=x-scheme-handler/office;
+StartupWMClass=office-for-linux
 `;
-fs.writeFileSync(path.join(pkgDir, 'usr/share/applications/ms365-linux.desktop'), desktopFile);
+fs.writeFileSync(path.join(pkgDir, 'usr/share/applications/office-for-linux.desktop'), desktopFile);
 
 const iconDir = path.join(PROJECT, 'dist', '.icon-set');
 if (fs.existsSync(iconDir)) {
@@ -63,7 +63,7 @@ if (fs.existsSync(iconDir)) {
     const iconFile = path.join(iconDir, `icon_${size}.png`);
     const destDir = path.join(pkgDir, `usr/share/icons/hicolor/${size}/apps`);
     if (fs.existsSync(iconFile)) {
-      fs.copyFileSync(iconFile, path.join(destDir, 'ms365-linux.png'));
+      fs.copyFileSync(iconFile, path.join(destDir, 'office-for-linux.png'));
     }
   }
 }
@@ -75,7 +75,7 @@ const PKGINFO = `# Maintainer: lnxperson <lnxperson@users.noreply.github.com>
 pkgname = ${name}
 pkgver = ${version}-1
 pkgdesc = Unofficial Microsoft 365 desktop client for Linux
-url = https://github.com/lnxperson/ms365-for-linux
+url = https://github.com/lnxperson/office-for-linux
 arch = ${arch}
 license = GPL3
 depends = glibc

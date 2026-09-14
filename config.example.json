@@ -13,7 +13,7 @@
   "customCSS": "",
   "autoUpdate": true,
   "proxy": "",
-  "partition": "persist:ms365-linux",
+  "partition": "persist:office-for-linux",
   "windowWidth": 1280,
   "windowHeight": 800,
   "windowMinWidth": 800,
