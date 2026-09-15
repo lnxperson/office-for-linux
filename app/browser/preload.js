@@ -1,6 +1,26 @@
 const { ipcRenderer, webFrame, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { SERVICES } = require(path.join(__dirname, '..', 'services'));
+
+function readFileAsDataUrl(filePath) {
+  try {
+    const buf = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = ext === '.png' ? 'image/png' : ext === '.svg' ? 'image/svg+xml' : 'image/png';
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch (_) {
+    return null;
+  }
+}
+
+const ASSETS = path.join(__dirname, '..', '..', 'assets');
+const ICONS = {};
+for (const s of SERVICES) {
+  const p = path.join(ASSETS, 'icons', `${s.id}.png`);
+  ICONS[s.id] = readFileAsDataUrl(p);
+}
+const brandLogo = readFileAsDataUrl(path.join(ASSETS, '..', 'officefl-logo.png'));
 
 const electronAPI = {
   getConfig: () => ipcRenderer.invoke('get-config'),
@@ -36,6 +56,8 @@ const electronAPI = {
     ipcRenderer.on('system-theme-changed', (event, theme) => callback(theme));
   },
   getServices: () => SERVICES,
+  getServiceIcons: () => ICONS,
+  getBrandLogo: () => brandLogo,
   openExternal: (url) => shell.openExternal(url),
   chooseDesktopMedia: (options) => ipcRenderer.invoke('choose-desktop-media', options),
   onScreenSharingStarted: (callback) => {

@@ -1,21 +1,17 @@
 let sidebar = null;
-let peek = null;
+let toggle = null;
 let activeService = null;
-let pinned = false;
-let isHovered = false;
-let hideTimer = null;
+let isOpen = false;
 
 const { webFrame } = require('electron');
 
 const SB_WIDTH = 58;
-const SB_LEFT_GAP = 10;
-const SB_OFFSET_OPEN = SB_LEFT_GAP + SB_WIDTH + 6;
+const SB_PADDING = 10;
 
 function sendLog(message) {
   if (window.electronAPI && window.electronAPI.sendLog) {
     window.electronAPI.sendLog(message);
   }
-  console.log(message);
 }
 
 let styleKey = null;
@@ -23,131 +19,113 @@ function injectCSS() {
   if (styleKey !== null) return;
 
   const css = `
-    :root {
-      --ofs-sb-w: ${SB_WIDTH}px;
-      --ofs-sb-offset: 0px;
-      --ofs-sb-bg: rgba(255,255,255,0.78);
-      --ofs-sb-border: rgba(10,20,40,0.10);
-      --ofs-sb-fg: #1a2230;
-      --ofs-sb-muted: rgba(20,35,60,0.55);
-      --ofs-sb-hover: rgba(0,60,160,0.08);
-      --ofs-sb-active: rgba(0,120,212,0.16);
-      --ofs-sb-tip-bg: rgba(255,255,255,0.95);
-      --ofs-sb-tip-fg: #1a2230;
-      --ofs-sb-glow: rgba(0,120,212,0.45);
+    #office-sidebar {
+      position: fixed;
+      top: ${SB_PADDING}px;
+      bottom: ${SB_PADDING}px;
+      left: ${SB_PADDING}px;
+      width: ${SB_WIDTH}px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 7px;
+      box-sizing: border-box;
+      z-index: 999999;
+      border-radius: 18px;
+      background: rgba(240,242,245,0.82);
+      -webkit-backdrop-filter: blur(28px) saturate(170%);
+      backdrop-filter: blur(28px) saturate(170%);
+      border: 1px solid rgba(10,20,40,0.08);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22), 0 2px 10px rgba(0,0,0,0.12);
+      opacity: 1;
+      transition: transform 0.32s cubic-bezier(0.4, 0, 0.1, 1);
+      transform: translateX(0);
     }
 
     @media (prefers-color-scheme: dark) {
-      :root {
-        --ofs-sb-bg: rgba(17,23,33,0.72);
-        --ofs-sb-border: rgba(255,255,255,0.10);
-        --ofs-sb-fg: #e8edf5;
-        --ofs-sb-muted: rgba(230,240,255,0.5);
-        --ofs-sb-hover: rgba(255,255,255,0.07);
-        --ofs-sb-active: rgba(0,120,212,0.32);
-        --ofs-sb-tip-bg: rgba(28,34,46,0.95);
-        --ofs-sb-tip-fg: #e8edf5;
+      #office-sidebar {
+        background: rgba(30,34,44,0.78);
+        border: 1px solid rgba(255,255,255,0.08);
       }
     }
 
     :root[style*="color-scheme: dark"],
     :root[style*="color-scheme:dark"] {
-      --ofs-sb-bg: rgba(17,23,33,0.72);
-      --ofs-sb-border: rgba(255,255,255,0.10);
-      --ofs-sb-fg: #e8edf5;
-      --ofs-sb-muted: rgba(230,240,255,0.5);
-      --ofs-sb-hover: rgba(255,255,255,0.07);
-      --ofs-sb-active: rgba(0,120,212,0.32);
-      --ofs-sb-tip-bg: rgba(28,34,46,0.95);
-      --ofs-sb-tip-fg: #e8edf5;
-    }
-
-    html {
-      overflow-x: hidden;
-    }
-
-    body {
-      margin-left: var(--ofs-sb-offset) !important;
-      width: auto !important;
-      transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-
-    #office-sb-peek {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 14px;
-      z-index: 999998;
-      cursor: default;
-    }
-
-    #office-sb-peek .office-peek-tab {
-      position: absolute;
-      top: 50%;
-      left: 4px;
-      width: 3px;
-      height: 64px;
-      margin-top: -32px;
-      border-radius: 3px;
-      background: var(--ofs-sb-muted);
-      opacity: 0.5;
-      transition: opacity 0.2s;
-    }
-
-    #office-sb-peek:hover .office-peek-tab,
-    #office-sb-peek.glow .office-peek-tab {
-      opacity: 0.95;
-    }
-
-    #office-sidebar {
-      position: fixed;
-      top: ${SB_LEFT_GAP}px;
-      bottom: ${SB_LEFT_GAP}px;
-      left: ${SB_LEFT_GAP}px;
-      width: var(--ofs-sb-w);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 7px;
-      box-sizing: border-box;
-      z-index: 999999;
-      border-radius: 18px;
-      background: var(--ofs-sb-bg);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      backdrop-filter: blur(24px) saturate(160%);
-      border: 1px solid var(--ofs-sb-border);
-      box-shadow: 0 10px 34px rgba(0,0,0,0.26), 0 2px 8px rgba(0,0,0,0.16);
-      transform: translateX(0);
-      opacity: 1;
-      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+      #office-sidebar {
+        background: rgba(30,34,44,0.78);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
     }
 
     #office-sidebar.hidden {
-      transform: translateX(calc(-100% - 26px));
-      opacity: 0;
+      transform: translateX(calc(-100% - ${SB_PADDING * 2}px));
       pointer-events: none;
-      visibility: hidden;
+    }
+
+    #office-sidebar-toggle {
+      position: fixed;
+      top: ${SB_PADDING + 4}px;
+      left: ${SB_PADDING + 4}px;
+      z-index: 1000000;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(10,20,40,0.12);
+      background: rgba(240,242,245,0.88);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      backdrop-filter: blur(20px) saturate(160%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #office-sidebar-toggle {
+        background: rgba(40,44,56,0.88);
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+    }
+
+    :root[style*="color-scheme: dark"],
+    :root[style*="color-scheme:dark"] {
+      #office-sidebar-toggle {
+        background: rgba(40,44,56,0.88);
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+    }
+
+    #office-sidebar-toggle:hover {
+      background: rgba(200,210,220,0.92);
+      transform: scale(1.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #office-sidebar-toggle:hover { background: rgba(60,66,82,0.92); }
+    }
+
+    #office-sidebar-toggle svg {
+      width: 20px;
+      height: 20px;
     }
 
     .office-brand {
       width: 42px;
       height: 42px;
       border-radius: 13px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #fff;
-      background: linear-gradient(135deg, #0078d4 0%, #2b7a44 55%, #a4373a 100%);
-      box-shadow: 0 4px 14px var(--ofs-sb-glow);
-      cursor: pointer;
-      user-select: none;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .office-brand img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
     }
 
     .office-nav {
@@ -170,18 +148,17 @@ function injectCSS() {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
     }
 
     .office-service-btn:hover {
-      background: var(--ofs-sb-hover);
+      background: rgba(0,60,160,0.08);
       transform: translateX(2px);
     }
 
     .office-service-btn.active {
-      background: var(--ofs-sb-active);
-      box-shadow: 0 0 0 1px var(--ofs-sb-border);
+      background: rgba(0,120,212,0.14);
+      box-shadow: 0 0 0 1px rgba(10,20,40,0.08);
     }
 
     .office-service-btn.active::before {
@@ -197,21 +174,16 @@ function injectCSS() {
     }
 
     .office-service-icon {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      object-fit: contain;
       transition: transform 0.18s ease;
     }
 
     .office-service-btn:hover .office-service-icon {
-      transform: scale(1.12);
+      transform: scale(1.10);
     }
-
-    .office-service-btn[data-service="word"] .office-service-icon { color: #4aa3ff; }
-    .office-service-btn[data-service="excel"] .office-service-icon { color: #45d483; }
-    .office-service-btn[data-service="powerpoint"] .office-service-icon { color: #ff8a5c; }
-    .office-service-btn[data-service="onedrive"] .office-service-icon { color: #5bb8ff; }
-    .office-service-btn[data-service="onenote"] .office-service-icon { color: #c08df5; }
 
     .office-sidebar-footer {
       margin-top: auto;
@@ -228,7 +200,7 @@ function injectCSS() {
       border: none;
       border-radius: 50%;
       background: transparent;
-      color: var(--ofs-sb-fg);
+      color: #333;
       font-size: 15px;
       cursor: pointer;
       display: flex;
@@ -237,13 +209,19 @@ function injectCSS() {
       transition: background 0.18s ease, transform 0.18s ease;
     }
 
+    @media (prefers-color-scheme: dark) {
+      .office-sidebar-btn { color: #ddd; }
+    }
+
+    .office-service-btn.active::before { background: #0078d4; }
+
     .office-sidebar-btn:hover {
-      background: var(--ofs-sb-hover);
+      background: rgba(0,60,160,0.08);
       transform: scale(1.08);
     }
 
     .office-sidebar-btn.active {
-      background: var(--ofs-sb-active);
+      background: rgba(0,120,212,0.14);
       color: #0078d4;
     }
 
@@ -254,7 +232,7 @@ function injectCSS() {
       border-radius: 50%;
       font-size: 15px;
       cursor: pointer;
-      color: var(--ofs-sb-fg);
+      color: #555;
       background: linear-gradient(135deg, rgba(0,120,212,0.35), rgba(164,55,58,0.35));
       display: flex;
       align-items: center;
@@ -262,28 +240,40 @@ function injectCSS() {
       transition: filter 0.18s ease, transform 0.18s ease;
     }
 
+    @media (prefers-color-scheme: dark) {
+      #office-profile-btn { color: #ccc; }
+    }
+
     #office-profile-btn:hover {
-      filter: brightness(1.2);
+      filter: brightness(1.15);
       transform: scale(1.08);
     }
 
     .office-tooltip {
       position: fixed;
-      z-index: 1000000;
+      z-index: 1000001;
       padding: 6px 12px;
       border-radius: 10px;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       font-size: 12.5px;
       font-weight: 500;
       letter-spacing: 0.2px;
-      background: var(--ofs-sb-tip-bg);
-      color: var(--ofs-sb-tip-fg);
-      border: 1px solid var(--ofs-sb-border);
+      background: rgba(255,255,255,0.95);
+      color: #1a2230;
+      border: 1px solid rgba(10,20,40,0.10);
       box-shadow: 0 8px 24px rgba(0,0,0,0.28);
       pointer-events: none;
       opacity: 0;
       transform: translateX(-4px);
       transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .office-tooltip {
+        background: rgba(30,34,46,0.95);
+        color: #e8edf5;
+        border: 1px solid rgba(255,255,255,0.10);
+      }
     }
 
     .office-tooltip.visible {
@@ -304,40 +294,25 @@ function injectCSS() {
   }
 }
 
-function applyOffset() {
-  const open = !sidebar.classList.contains('hidden');
-  const px = open ? SB_OFFSET_OPEN : 0;
-  document.documentElement.style.setProperty('--ofs-sb-offset', `${px}px`);
+function toggleSidebar() {
+  if (!sidebar) return;
+  isOpen = !isOpen;
+  sidebar.classList.toggle('hidden', !isOpen);
+  updateToggleButton();
 }
 
-function reveal() {
-  if (!sidebar || pinned) return;
-  clearTimeout(hideTimer);
-  sidebar.classList.remove('hidden');
-  isHovered = false;
-  applyOffset();
+function updateToggleButton() {
+  if (!toggle) return;
+  toggle.innerHTML = isOpen ? closeIcon() : menuIcon();
+  toggle.title = isOpen ? 'Close sidebar' : 'Open sidebar';
 }
 
-function scheduleHide(delay = 420) {
-  if (!sidebar || pinned) return;
-  clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => {
-    hide();
-  }, delay);
+function menuIcon() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>';
 }
 
-function hide() {
-  if (!sidebar || pinned) return;
-  sidebar.classList.add('hidden');
-  applyOffset();
-}
-
-function revealFromPeek() {
-  if (pinned) return;
-  clearTimeout(hideTimer);
-  reveal();
-  // Keep it open while the cursor lingers on the peek edge.
-  if (peek) peek.classList.add('glow');
+function closeIcon() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>';
 }
 
 function createTooltip() {
@@ -349,12 +324,10 @@ function createTooltip() {
 
 function showTooltip(btn, text) {
   let tooltip = document.querySelector('.office-tooltip');
-  if (!tooltip) {
-    tooltip = createTooltip();
-  }
+  if (!tooltip) tooltip = createTooltip();
   const rect = btn.getBoundingClientRect();
   tooltip.textContent = text;
-  tooltip.style.left = (rect.right + 14) + 'px';
+  tooltip.style.left = (rect.right + 10) + 'px';
   tooltip.style.top = (rect.top + rect.height / 2) + 'px';
   tooltip.style.transform = 'translateY(-50%)';
   tooltip.classList.add('visible');
@@ -365,52 +338,27 @@ function showTooltip(btn, text) {
 
 function hideTooltip() {
   const tooltip = document.querySelector('.office-tooltip');
-  if (tooltip) {
-    tooltip.classList.remove('visible');
-  }
-}
-
-function getServiceIcon(serviceId) {
-  const icons = {
-    word: 'W',
-    excel: 'X',
-    powerpoint: 'P',
-    onedrive: '☁',
-    onenote: 'N'
-  };
-  return icons[serviceId] || '•';
-}
-
-function getServiceLabel(serviceId) {
-  const labels = {
-    word: 'Word',
-    excel: 'Excel',
-    powerpoint: 'PowerPoint',
-    onedrive: 'OneDrive',
-    onenote: 'OneNote'
-  };
-  return labels[serviceId] || serviceId;
+  if (tooltip) tooltip.classList.remove('visible');
 }
 
 function closeSidebar() {
-  if (sidebar) {
-    sidebar.remove();
-    sidebar = null;
-  }
-  if (peek) {
-    peek.remove();
-    peek = null;
-  }
-  const styleEl = document.getElementById('office-sidebar-style');
-  if (styleEl) {
-    styleEl.remove();
-  }
+  if (sidebar) { sidebar.remove(); sidebar = null; }
+  if (toggle) { toggle.remove(); toggle = null; }
 }
 
 function createSidebar(services, activeId) {
   closeSidebar();
-
   activeService = activeId;
+
+  const icons = (window.electronAPI.getServiceIcons && window.electronAPI.getServiceIcons()) || {};
+  const logo = (window.electronAPI.getBrandLogo && window.electronAPI.getBrandLogo()) || null;
+
+  toggle = document.createElement('button');
+  toggle.id = 'office-sidebar-toggle';
+  toggle.innerHTML = menuIcon();
+  toggle.title = 'Open sidebar';
+  toggle.addEventListener('click', toggleSidebar);
+  document.body.appendChild(toggle);
 
   sidebar = document.createElement('div');
   sidebar.id = 'office-sidebar';
@@ -418,8 +366,15 @@ function createSidebar(services, activeId) {
 
   const brand = document.createElement('div');
   brand.className = 'office-brand';
-  brand.textContent = 'OF';
-  brand.title = 'Office for Linux — hover the left edge or pin to keep open';
+  if (logo) {
+    const img = document.createElement('img');
+    img.src = logo;
+    img.alt = 'Office for Linux';
+    brand.appendChild(img);
+  } else {
+    brand.textContent = 'OF';
+    brand.style.cssText = 'font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#0078d4,#2b7a44,#a4373a);display:flex;align-items:center;justify-content:center;';
+  }
   sidebar.appendChild(brand);
 
   const nav = document.createElement('nav');
@@ -430,14 +385,23 @@ function createSidebar(services, activeId) {
     btn.className = 'office-service-btn';
     btn.dataset.service = service.id;
 
-    const icon = document.createElement('span');
-    icon.className = 'office-service-icon';
-    icon.textContent = getServiceIcon(service.id);
-    btn.appendChild(icon);
+    const img = document.createElement('img');
+    img.className = 'office-service-icon';
+    if (icons[service.id]) {
+      img.src = icons[service.id];
+    } else {
+      img.alt = service.name;
+      img.style.cssText = `width:26px;height:26px;border-radius:6px;background:${service.color || '#666'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;`;
+      const span = document.createElement('span');
+      span.textContent = service.name[0];
+      img.replaceWith(span);
+      span.style.cssText = `width:26px;height:26px;border-radius:6px;background:${service.color || '#666'};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;`;
+      btn.appendChild(span);
+    }
+    btn.appendChild(img);
 
     btn.addEventListener('mouseenter', (e) => {
       showTooltip(btn, service.name);
-      reveal();
     });
     btn.addEventListener('mouseleave', hideTooltip);
     btn.addEventListener('click', () => {
@@ -446,10 +410,7 @@ function createSidebar(services, activeId) {
       }
     });
 
-    if (service.id === activeId) {
-      btn.classList.add('active');
-    }
-
+    if (service.id === activeId) btn.classList.add('active');
     nav.appendChild(btn);
   }
 
@@ -460,19 +421,15 @@ function createSidebar(services, activeId) {
 
   const profileBtn = document.createElement('button');
   profileBtn.id = 'office-profile-btn';
-  profileBtn.textContent = '👤';
+  profileBtn.textContent = '\u{1F464}';
   profileBtn.title = 'Switch profile';
   profileBtn.addEventListener('mouseenter', () => showTooltip(profileBtn, 'Switch profile'));
   profileBtn.addEventListener('mouseleave', hideTooltip);
   profileBtn.addEventListener('click', async () => {
     try {
-      if (!window.electronAPI.switchProfile || !window.electronAPI.getProfiles) {
-        return;
-      }
+      if (!window.electronAPI.switchProfile || !window.electronAPI.getProfiles) return;
       const profiles = await window.electronAPI.getProfiles();
-      if (!profiles || profiles.length === 0) {
-        return;
-      }
+      if (!profiles || profiles.length === 0) return;
       const current = await window.electronAPI.getActiveProfile();
       const curId = current && current.id ? current.id : profiles[0].id;
       const index = profiles.findIndex((p) => p.id === curId);
@@ -484,31 +441,9 @@ function createSidebar(services, activeId) {
   });
   footer.appendChild(profileBtn);
 
-  const pinBtn = document.createElement('button');
-  pinBtn.id = 'office-pin-btn';
-  pinBtn.className = 'office-sidebar-btn';
-  pinBtn.textContent = '📌';
-  pinBtn.title = 'Pin sidebar';
-  pinBtn.addEventListener('mouseenter', () => showTooltip(pinBtn, pinned ? 'Unpin sidebar' : 'Pin sidebar'));
-  pinBtn.addEventListener('mouseleave', hideTooltip);
-  pinBtn.addEventListener('click', () => {
-    pinned = !pinned;
-    pinBtn.classList.toggle('active', pinned);
-    pinBtn.title = pinned ? 'Unpin sidebar' : 'Pin sidebar';
-    if (pinned) {
-      clearTimeout(hideTimer);
-      sidebar.classList.remove('hidden');
-      applyOffset();
-    } else {
-      scheduleHide(350);
-    }
-  });
-  footer.appendChild(pinBtn);
-
   const settingsBtn = document.createElement('button');
-  settingsBtn.id = 'office-settings-btn';
   settingsBtn.className = 'office-sidebar-btn';
-  settingsBtn.textContent = '⚙';
+  settingsBtn.textContent = '\u2699\uFE0F';
   settingsBtn.title = 'Microsoft account';
   settingsBtn.addEventListener('mouseenter', () => showTooltip(settingsBtn, 'Microsoft account'));
   settingsBtn.addEventListener('mouseleave', hideTooltip);
@@ -520,50 +455,7 @@ function createSidebar(services, activeId) {
   footer.appendChild(settingsBtn);
 
   sidebar.appendChild(footer);
-
-  peek = document.createElement('div');
-  peek.id = 'office-sb-peek';
-  const peekTab = document.createElement('span');
-  peekTab.className = 'office-peek-tab';
-  peek.appendChild(peekTab);
-
-  sidebar.addEventListener('mouseenter', () => {
-    if (pinned) return;
-    isHovered = true;
-    clearTimeout(hideTimer);
-    sidebar.classList.remove('hidden');
-    applyOffset();
-  });
-  sidebar.addEventListener('mouseleave', () => {
-    isHovered = false;
-    scheduleHide();
-  });
-
-  peek.addEventListener('mouseenter', revealFromPeek);
-  peek.addEventListener('mouseleave', () => {
-    peek.classList.remove('glow');
-    if (!pinned && !isHovered) {
-      scheduleHide(200);
-    }
-  });
-
   document.body.appendChild(sidebar);
-  document.body.appendChild(peek);
-
-  sidebar.classList.add('hidden');
-  applyOffset();
-
-  // Brief first-time reveal so the user discovers the sidebar.
-  setTimeout(() => {
-    if (!pinned && !isHovered) {
-      reveal();
-      setTimeout(() => {
-        if (!pinned && !isHovered) {
-          hide();
-        }
-      }, 2000);
-    }
-  }, 350);
 }
 
 function setActiveService(serviceId) {
@@ -571,10 +463,6 @@ function setActiveService(serviceId) {
   document.querySelectorAll('.office-service-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.service === serviceId);
   });
-}
-
-function getSidebarState() {
-  return { pinned };
 }
 
 function initSidebar() {
@@ -588,27 +476,22 @@ function initSidebar() {
 
     if (window.electronAPI.getActiveService) {
       window.electronAPI.getActiveService().then((id) => {
-        if (id && sidebar) {
-          setActiveService(id);
-        }
+        if (id && sidebar) setActiveService(id);
       }).catch(() => {});
     }
 
     if (window.electronAPI.onServiceChanged) {
       window.electronAPI.onServiceChanged((serviceId) => {
         if (sidebar) setActiveService(serviceId);
-        if (pinned && sidebar) {
-          reveal();
-        }
       });
     }
 
     const guard = new MutationObserver(() => {
+      if (!sidebar && document.getElementById('office-sidebar')) return;
       if (sidebar && !document.getElementById('office-sidebar')) {
-        const servicesNow = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
         styleKey = null;
         injectCSS();
-        createSidebar(servicesNow, activeId);
+        createSidebar(services, activeId);
         if (window.electronAPI.getActiveService) {
           window.electronAPI.getActiveService().then((id) => {
             if (id && sidebar) setActiveService(id);
@@ -626,4 +509,4 @@ function initSidebar() {
   }
 }
 
-module.exports = { initSidebar, setActiveService, getSidebarState };
+module.exports = { initSidebar, setActiveService, toggleSidebar };
