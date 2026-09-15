@@ -1,12 +1,14 @@
 let sidebar = null;
-let toggle = null;
+let titlebar = null;
 let activeService = null;
 let isOpen = false;
+let isMaximized = false;
 
 const { webFrame } = require('electron');
 
 const SB_WIDTH = 58;
 const SB_PADDING = 10;
+const TB_HEIGHT = 38;
 
 function sendLog(message) {
   if (window.electronAPI && window.electronAPI.sendLog) {
@@ -19,6 +21,75 @@ function injectCSS() {
   if (styleKey !== null) return;
 
   const css = `
+    @media (prefers-color-scheme: dark) {
+      #office-titlebar { background: rgba(30,34,44,0.92); border-bottom: 1px solid rgba(255,255,255,0.06); }
+      #office-titlebar .tb-btn:hover { background: rgba(255,255,255,0.1); }
+      #office-titlebar .tb-btn.close:hover { background: #c42b1c; }
+      #office-titlebar .tb-btn svg { color: #ddd; }
+      #office-titlebar .tb-btn.close svg { color: #ddd; }
+    }
+
+    :root[style*="color-scheme: dark"],
+    :root[style*="color-scheme:dark"] {
+      #office-titlebar { background: rgba(30,34,44,0.92); border-bottom: 1px solid rgba(255,255,255,0.06); }
+      #office-titlebar .tb-btn:hover { background: rgba(255,255,255,0.1); }
+      #office-titlebar .tb-btn.close:hover { background: #c42b1c; }
+      #office-titlebar .tb-btn svg { color: #ddd; }
+    }
+
+    #office-titlebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: ${TB_HEIGHT}px;
+      z-index: 1000002;
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      background: rgba(245,247,250,0.88);
+      border-bottom: 1px solid rgba(10,20,40,0.08);
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    #office-titlebar .tb-controls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      -webkit-app-region: no-drag;
+    }
+
+    #office-titlebar .tb-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      -webkit-app-region: no-drag;
+    }
+
+    #office-titlebar .tb-btn:hover { background: rgba(0,0,0,0.06); }
+
+    #office-titlebar .tb-btn.close:hover { background: #c42b1c; }
+    #office-titlebar .tb-btn.close:hover svg { color: #fff; }
+
+    #office-titlebar .tb-btn svg {
+      width: 16px;
+      height: 16px;
+      color: #333;
+    }
+
+    #office-titlebar .tb-spacer {
+      flex: 1;
+      -webkit-app-region: drag;
+    }
+
     #office-sidebar {
       position: fixed;
       top: ${SB_PADDING}px;
@@ -60,55 +131,6 @@ function injectCSS() {
     #office-sidebar.hidden {
       transform: translateX(calc(-100% - ${SB_PADDING * 2}px));
       pointer-events: none;
-    }
-
-    #office-sidebar-toggle {
-      position: fixed;
-      top: ${SB_PADDING + 4}px;
-      left: ${SB_PADDING + 4}px;
-      z-index: 1000000;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid rgba(10,20,40,0.12);
-      background: rgba(240,242,245,0.88);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      backdrop-filter: blur(20px) saturate(160%);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-      transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      #office-sidebar-toggle {
-        background: rgba(40,44,56,0.88);
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-    }
-
-    :root[style*="color-scheme: dark"],
-    :root[style*="color-scheme:dark"] {
-      #office-sidebar-toggle {
-        background: rgba(40,44,56,0.88);
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-    }
-
-    #office-sidebar-toggle:hover {
-      background: rgba(200,210,220,0.92);
-      transform: scale(1.06);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      #office-sidebar-toggle:hover { background: rgba(60,66,82,0.92); }
-    }
-
-    #office-sidebar-toggle svg {
-      width: 20px;
-      height: 20px;
     }
 
     .office-brand {
@@ -213,16 +235,9 @@ function injectCSS() {
       .office-sidebar-btn { color: #ddd; }
     }
 
-    .office-service-btn.active::before { background: #0078d4; }
-
     .office-sidebar-btn:hover {
       background: rgba(0,60,160,0.08);
       transform: scale(1.08);
-    }
-
-    .office-sidebar-btn.active {
-      background: rgba(0,120,212,0.14);
-      color: #0078d4;
     }
 
     #office-profile-btn {
@@ -251,7 +266,7 @@ function injectCSS() {
 
     .office-tooltip {
       position: fixed;
-      z-index: 1000001;
+      z-index: 1000003;
       padding: 6px 12px;
       border-radius: 10px;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -298,17 +313,32 @@ function toggleSidebar() {
   if (!sidebar) return;
   isOpen = !isOpen;
   sidebar.classList.toggle('hidden', !isOpen);
-  updateToggleButton();
 }
 
-function updateToggleButton() {
-  if (!toggle) return;
-  toggle.innerHTML = isOpen ? closeIcon() : menuIcon();
-  toggle.title = isOpen ? 'Close sidebar' : 'Open sidebar';
+function updateToggleIcon() {
+  if (!titlebar) return;
+  const btn = titlebar.querySelector('#office-sidebar-toggle');
+  if (!btn) return;
+  btn.innerHTML = isOpen
+    ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>'
+    : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>';
+  btn.title = isOpen ? 'Close sidebar' : 'Open sidebar';
 }
 
 function menuIcon() {
   return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>';
+}
+
+function minimizeIcon() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 12h14"/></svg>';
+}
+
+function maximizeIcon() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2" stroke-width="2" fill="none"/></svg>';
+}
+
+function restoreIcon() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="12" height="12" rx="1.5" stroke-width="2" fill="none"/><path d="M8 8h12v12H8z" fill="none" stroke-width="2" rx="1.5"/></svg>';
 }
 
 function closeIcon() {
@@ -341,24 +371,86 @@ function hideTooltip() {
   if (tooltip) tooltip.classList.remove('visible');
 }
 
-function closeSidebar() {
+function cleanup() {
+  if (titlebar) { titlebar.remove(); titlebar = null; }
   if (sidebar) { sidebar.remove(); sidebar = null; }
-  if (toggle) { toggle.remove(); toggle = null; }
+}
+
+function createTitlebar() {
+  titlebar = document.createElement('div');
+  titlebar.id = 'office-titlebar';
+
+  const controls = document.createElement('div');
+  controls.className = 'tb-controls';
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'tb-btn';
+  toggleBtn.id = 'office-sidebar-toggle';
+  toggleBtn.innerHTML = menuIcon();
+  toggleBtn.title = 'Open sidebar';
+  toggleBtn.addEventListener('click', () => { toggleSidebar(); updateToggleIcon(); });
+  toggleBtn.addEventListener('mouseenter', () => showTooltip(toggleBtn, 'Toggle sidebar'));
+  toggleBtn.addEventListener('mouseleave', hideTooltip);
+  controls.appendChild(toggleBtn);
+
+  const minBtn = document.createElement('button');
+  minBtn.className = 'tb-btn';
+  minBtn.innerHTML = minimizeIcon();
+  minBtn.title = 'Minimize';
+  minBtn.addEventListener('click', () => { if (window.electronAPI.minimizeWindow) window.electronAPI.minimizeWindow(); });
+  controls.appendChild(minBtn);
+
+  const maxBtn = document.createElement('button');
+  maxBtn.className = 'tb-btn';
+  maxBtn.id = 'office-maximize-btn';
+  maxBtn.innerHTML = maximizeIcon();
+  maxBtn.title = 'Maximize';
+  maxBtn.addEventListener('click', () => { if (window.electronAPI.maximizeWindow) window.electronAPI.maximizeWindow(); });
+  controls.appendChild(maxBtn);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'tb-btn close';
+  closeBtn.innerHTML = closeIcon();
+  closeBtn.title = 'Close';
+  closeBtn.addEventListener('click', () => { if (window.electronAPI.closeWindow) window.electronAPI.closeWindow(); });
+  controls.appendChild(closeBtn);
+
+  titlebar.appendChild(controls);
+
+  const spacer = document.createElement('div');
+  spacer.className = 'tb-spacer';
+  titlebar.appendChild(spacer);
+
+  document.body.appendChild(titlebar);
+
+  if (window.electronAPI.isWindowMaximized) {
+    window.electronAPI.isWindowMaximized().then((max) => {
+      isMaximized = max;
+      updateMaximizeButton();
+    }).catch(() => {});
+  }
+
+  if (window.electronAPI.onWindowMaximizeChange) {
+    window.electronAPI.onWindowMaximizeChange((max) => {
+      isMaximized = max;
+      updateMaximizeButton();
+    });
+  }
+}
+
+function updateMaximizeButton() {
+  if (!titlebar) return;
+  const btn = titlebar.querySelector('#office-maximize-btn');
+  if (!btn) return;
+  btn.innerHTML = isMaximized ? restoreIcon() : maximizeIcon();
+  btn.title = isMaximized ? 'Restore' : 'Maximize';
 }
 
 function createSidebar(services, activeId) {
-  closeSidebar();
   activeService = activeId;
 
   const icons = (window.electronAPI.getServiceIcons && window.electronAPI.getServiceIcons()) || {};
   const logo = (window.electronAPI.getBrandLogo && window.electronAPI.getBrandLogo()) || null;
-
-  toggle = document.createElement('button');
-  toggle.id = 'office-sidebar-toggle';
-  toggle.innerHTML = menuIcon();
-  toggle.title = 'Open sidebar';
-  toggle.addEventListener('click', toggleSidebar);
-  document.body.appendChild(toggle);
 
   sidebar = document.createElement('div');
   sidebar.id = 'office-sidebar';
@@ -400,9 +492,7 @@ function createSidebar(services, activeId) {
     }
     btn.appendChild(img);
 
-    btn.addEventListener('mouseenter', (e) => {
-      showTooltip(btn, service.name);
-    });
+    btn.addEventListener('mouseenter', () => showTooltip(btn, service.name));
     btn.addEventListener('mouseleave', hideTooltip);
     btn.addEventListener('click', () => {
       if (window.electronAPI.switchService) {
@@ -471,8 +561,9 @@ function initSidebar() {
     let activeId = 'word';
 
     injectCSS();
+    createTitlebar();
     createSidebar(services, activeId);
-    sendLog(`Sidebar created (${services.length} services)`);
+    sendLog(`Sidebar created (${services.length} services) with titlebar`);
 
     if (window.electronAPI.getActiveService) {
       window.electronAPI.getActiveService().then((id) => {
@@ -487,8 +578,14 @@ function initSidebar() {
     }
 
     const guard = new MutationObserver(() => {
-      if (!sidebar && document.getElementById('office-sidebar')) return;
-      if (sidebar && !document.getElementById('office-sidebar')) {
+      const hasSidebar = document.getElementById('office-sidebar');
+      const hasTitlebar = document.getElementById('office-titlebar');
+      if (!hasTitlebar) {
+        styleKey = null;
+        injectCSS();
+        createTitlebar();
+      }
+      if (!hasSidebar) {
         styleKey = null;
         injectCSS();
         createSidebar(services, activeId);

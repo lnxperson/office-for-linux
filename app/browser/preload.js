@@ -20,7 +20,12 @@ for (const s of SERVICES) {
   const p = path.join(ASSETS, 'icons', `${s.id}.png`);
   ICONS[s.id] = readFileAsDataUrl(p);
 }
-const brandLogo = readFileAsDataUrl(path.join(ASSETS, '..', 'officefl-logo.png'));
+const brandLogo = readFileAsDataUrl(path.join(ASSETS, 'officefl-logo.png'));
+
+if (!brandLogo) {
+  const alt = readFileAsDataUrl(path.join(ASSETS, '..', 'officefl-logo.png'));
+  if (alt) globalThis.__officeBrandLogo = alt;
+}
 
 const electronAPI = {
   getConfig: () => ipcRenderer.invoke('get-config'),
@@ -68,6 +73,13 @@ const electronAPI = {
   },
   sendLog: (message) => {
     ipcRenderer.send('renderer-log', message);
+  },
+  minimizeWindow: () => ipcRenderer.send('window-minimize'),
+  maximizeWindow: () => ipcRenderer.send('window-maximize'),
+  closeWindow: () => ipcRenderer.send('window-close'),
+  isWindowMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  onWindowMaximizeChange: (callback) => {
+    ipcRenderer.on('window-maximize-change', (event, maximized) => callback(maximized));
   }
 };
 

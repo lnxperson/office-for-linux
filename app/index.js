@@ -204,6 +204,36 @@ if (!gotTheLock) {
       themeManager.setTheme(theme);
     });
 
+    ipcMain.on('window-minimize', () => {
+      if (mainWindow && mainWindow.window) mainWindow.window.minimize();
+    });
+
+    ipcMain.on('window-maximize', () => {
+      if (!mainWindow || !mainWindow.window) return;
+      if (mainWindow.window.isMaximized()) {
+        mainWindow.window.unmaximize();
+      } else {
+        mainWindow.window.maximize();
+      }
+    });
+
+    ipcMain.on('window-close', () => {
+      if (mainWindow && mainWindow.window) mainWindow.window.close();
+    });
+
+    ipcMain.handle('window-is-maximized', () => {
+      return mainWindow && mainWindow.window ? mainWindow.window.isMaximized() : false;
+    });
+
+    if (mainWindow && mainWindow.window) {
+      mainWindow.window.on('maximize', () => {
+        mainWindow.send('window-maximize-change', true);
+      });
+      mainWindow.window.on('unmaximize', () => {
+        mainWindow.send('window-maximize-change', false);
+      });
+    }
+
     nativeTheme.on('updated', () => {
       if (mainWindow && mainWindow.window) {
         mainWindow.window.webContents.send('system-theme-changed', nativeTheme.shouldUseDarkColors ? 'dark' : 'light');

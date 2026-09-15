@@ -39,6 +39,7 @@ class MainAppWindow {
       x: winState.x,
       y: winState.y,
       show: false,
+      frame: false,
       title: 'Office for Linux',
       backgroundColor: '#1f2733',
       autoHideMenuBar: true,
