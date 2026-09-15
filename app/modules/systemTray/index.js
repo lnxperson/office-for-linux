@@ -36,74 +36,33 @@ class SystemTray {
       this.mainWindow.toggle();
     });
 
-    this.tray.on('right-click', () => {
-      this.tray.popUpContextMenu(this.buildContextMenu());
-    });
-
     this.updateContextMenu();
   }
 
   buildContextMenu() {
-    const menuItems = [];
     const activeService = this.mainWindow.currentService;
 
     const servicesMenu = SERVICES.map((service) => ({
       label: service.name,
-      type: 'radio' ,
+      type: 'radio',
       checked: activeService === service.id,
       click: () => {
         this.mainWindow.loadService(service.id);
       }
     }));
 
-    menuItems.push({
-      label: 'Open Office for Linux',
-      click: () => this.mainWindow.show()
-    });
-
-    menuItems.push({ type: 'separator' });
-    menuItems.push({ label: 'Services', submenu: servicesMenu });
-
-    if (this.profiles) {
-      const profiles = this.profiles.getAll();
-      if (profiles.length > 1) {
-        const profilesMenu = profiles.map((profile) => ({
-          label: profile.name,
-          type: 'radio',
-          checked: this.profiles.getActive()?.id === profile.id,
-          click: () => {
-            this.profiles.switchTo(profile.id).then(() => {
-              this.mainWindow.loadService(this.mainWindow.currentService || this.config.get('defaultService'));
-            });
-          }
-        }));
-        menuItems.push({ type: 'separator' });
-        menuItems.push({ label: 'Profiles', submenu: profilesMenu });
-      }
-    }
-
-    menuItems.push({ type: 'separator' });
-
-    menuItems.push({
-      label: 'Show / Hide',
-      accelerator: 'Ctrl+Shift+M',
-      click: () => this.mainWindow.toggle()
-    });
-
-    menuItems.push({
-      label: this.config.get('closeToTray') ? 'Close to Tray (enabled)' : 'Close to Tray (disabled)',
-      type: 'checkbox',
-      checked: this.config.get('closeToTray'),
-      click: (item) => {
-        this.config.set('closeToTray', item.checked);
-        this.updateContextMenu();
-      }
-    });
-
-    menuItems.push({ type: 'separator' });
-    menuItems.push({ label: 'Quit', click: () => app.quit() });
-
-    return Menu.buildFromTemplate(menuItems);
+    return Menu.buildFromTemplate([
+      {
+        label: 'Services',
+        submenu: servicesMenu
+      },
+      {
+        label: this.mainWindow.isVisible() ? 'Hide Window' : 'Show Window',
+        click: () => this.mainWindow.toggle()
+      },
+      { type: 'separator' },
+      { label: 'Quit', click: () => app.quit() }
+    ]);
   }
 
   updateContextMenu() {
@@ -142,7 +101,7 @@ class SystemTray {
       ? `Office for Linux (${this.badgeCount})`
       : 'Office for Linux');
 
-    if (this.mainWindow && this.mainWindow.window && process.platform !== 'darwin') {
+    if (this.mainWindow && this.mainWindow.window && !this.mainWindow.window.isDestroyed() && process.platform !== 'darwin') {
       this.mainWindow.window.setOverlayIcon(
         count > 0 ? this.baseIcon : null,
         count > 0 ? `Office for Linux (${count})` : ''

@@ -561,9 +561,20 @@ function getSidebarState() {
   return { pinned };
 }
 
-function initSidebar() {
+async function initSidebar() {
   const services = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
-  const activeId = window.electronAPI.getActiveService ? window.electronAPI.getActiveService() : 'word';
+  let activeId = 'word';
+
+  if (window.electronAPI.getActiveService) {
+    try {
+      const id = await window.electronAPI.getActiveService();
+      if (id) {
+        activeId = id;
+      }
+    } catch (err) {
+      console.warn('[Office] Could not read active service:', err);
+    }
+  }
 
   injectCSS();
   createSidebar(services, activeId);

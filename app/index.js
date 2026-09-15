@@ -92,6 +92,9 @@ if (!gotTheLock) {
       if (flushed) return;
       event.preventDefault();
       flushed = true;
+      if (mainWindow) {
+        mainWindow.quitting = true;
+      }
       const partition = profiles.getActive() ? profiles.getActive().partition : config.get('partition');
       session.fromPartition(partition)
         .flushStorageData()

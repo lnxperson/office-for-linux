@@ -12,6 +12,7 @@ class MainAppWindow {
     this.window = null;
     this.currentService = null;
     this.tray = null;
+    this.quitting = false;
 
     const initialPartition = deps.initialPartition || null;
     this.createWindow(initialPartition);
@@ -68,7 +69,7 @@ class MainAppWindow {
     });
 
     this.window.on('close', (event) => {
-      if (this.config.get('closeToTray') && this.tray) {
+      if (this.config.get('closeToTray') && this.tray && !this.quitting) {
         event.preventDefault();
         this.window.hide();
       }
@@ -135,6 +136,11 @@ class MainAppWindow {
   }
 
   show() {
+    if (!this.window || this.window.isDestroyed()) {
+      this.createWindow();
+      const serviceId = this.currentService || this.config.get('defaultService');
+      this.loadService(serviceId);
+    }
     if (this.window.isMinimized()) {
       this.window.restore();
     }
@@ -143,11 +149,17 @@ class MainAppWindow {
   }
 
   hide() {
-    this.window.hide();
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.hide();
+    }
   }
 
   toggle() {
-    if (this.window.isVisible()) {
+    if (!this.window || this.window.isDestroyed()) {
+      this.show();
+      return;
+    }
+    if (this.window.isVisible() && !this.window.isMinimized()) {
       this.window.hide();
     } else {
       this.show();
@@ -155,20 +167,23 @@ class MainAppWindow {
   }
 
   isVisible() {
-    return this.window.isVisible();
+    return !!(this.window && !this.window.isDestroyed() && this.window.isVisible());
   }
 
   zoomIn() {
+    if (!this.window || this.window.isDestroyed()) return;
     const level = this.window.webContents.getZoomFactor();
     this.window.webContents.setZoomFactor(Math.min(3.0, level + 0.1));
   }
 
   zoomOut() {
+    if (!this.window || this.window.isDestroyed()) return;
     const level = this.window.webContents.getZoomFactor();
     this.window.webContents.setZoomFactor(Math.max(0.5, level - 0.1));
   }
 
   zoomReset() {
+    if (!this.window || this.window.isDestroyed()) return;
     this.window.webContents.setZoomFactor(this.config.get('zoomFactor'));
   }
 
