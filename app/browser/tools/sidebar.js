@@ -60,6 +60,11 @@ function injectCSS() {
       -webkit-app-region: no-drag;
     }
 
+    #office-titlebar .tb-controls.tb-right {
+      margin-left: auto;
+      gap: 2px;
+    }
+
     #office-titlebar .tb-btn {
       width: 32px;
       height: 32px;
@@ -380,8 +385,8 @@ function createTitlebar() {
   titlebar = document.createElement('div');
   titlebar.id = 'office-titlebar';
 
-  const controls = document.createElement('div');
-  controls.className = 'tb-controls';
+  const left = document.createElement('div');
+  left.className = 'tb-controls';
 
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'tb-btn';
@@ -391,14 +396,23 @@ function createTitlebar() {
   toggleBtn.addEventListener('click', () => { toggleSidebar(); updateToggleIcon(); });
   toggleBtn.addEventListener('mouseenter', () => showTooltip(toggleBtn, 'Toggle sidebar'));
   toggleBtn.addEventListener('mouseleave', hideTooltip);
-  controls.appendChild(toggleBtn);
+  left.appendChild(toggleBtn);
+
+  titlebar.appendChild(left);
+
+  const spacer = document.createElement('div');
+  spacer.className = 'tb-spacer';
+  titlebar.appendChild(spacer);
+
+  const right = document.createElement('div');
+  right.className = 'tb-controls tb-right';
 
   const minBtn = document.createElement('button');
   minBtn.className = 'tb-btn';
   minBtn.innerHTML = minimizeIcon();
   minBtn.title = 'Minimize';
   minBtn.addEventListener('click', () => { if (window.electronAPI.minimizeWindow) window.electronAPI.minimizeWindow(); });
-  controls.appendChild(minBtn);
+  right.appendChild(minBtn);
 
   const maxBtn = document.createElement('button');
   maxBtn.className = 'tb-btn';
@@ -406,20 +420,16 @@ function createTitlebar() {
   maxBtn.innerHTML = maximizeIcon();
   maxBtn.title = 'Maximize';
   maxBtn.addEventListener('click', () => { if (window.electronAPI.maximizeWindow) window.electronAPI.maximizeWindow(); });
-  controls.appendChild(maxBtn);
+  right.appendChild(maxBtn);
 
   const closeBtn = document.createElement('button');
   closeBtn.className = 'tb-btn close';
   closeBtn.innerHTML = closeIcon();
   closeBtn.title = 'Close';
   closeBtn.addEventListener('click', () => { if (window.electronAPI.closeWindow) window.electronAPI.closeWindow(); });
-  controls.appendChild(closeBtn);
+  right.appendChild(closeBtn);
 
-  titlebar.appendChild(controls);
-
-  const spacer = document.createElement('div');
-  spacer.className = 'tb-spacer';
-  titlebar.appendChild(spacer);
+  titlebar.appendChild(right);
 
   document.body.appendChild(titlebar);
 
@@ -522,9 +532,14 @@ function createSidebar(services, activeId) {
       if (!profiles || profiles.length === 0) return;
       const current = await window.electronAPI.getActiveProfile();
       const curId = current && current.id ? current.id : profiles[0].id;
+      if (profiles.length === 1 && window.electronAPI.createProfile) {
+        const created = await window.electronAPI.createProfile(`Profile ${profiles.length + 1}`);
+        if (created && created.id) window.electronAPI.switchProfile(created.id);
+        return;
+      }
       const index = profiles.findIndex((p) => p.id === curId);
       const next = profiles[(index + 1) % profiles.length];
-      window.electronAPI.switchProfile(next.id);
+      if (next.id !== curId) window.electronAPI.switchProfile(next.id);
     } catch (err) {
       console.warn('[Office] Profile switch failed:', err);
     }
@@ -538,8 +553,8 @@ function createSidebar(services, activeId) {
   settingsBtn.addEventListener('mouseenter', () => showTooltip(settingsBtn, 'Microsoft account'));
   settingsBtn.addEventListener('mouseleave', hideTooltip);
   settingsBtn.addEventListener('click', () => {
-    if (window.electronAPI.openExternal) {
-      window.electronAPI.openExternal('https://account.microsoft.com');
+    if (window.electronAPI.navigate) {
+      window.electronAPI.navigate('https://account.microsoft.com');
     }
   });
   footer.appendChild(settingsBtn);

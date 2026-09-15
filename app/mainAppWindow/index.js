@@ -90,16 +90,8 @@ class MainAppWindow {
     });
 
     this.window.webContents.setWindowOpenHandler(({ url }) => {
-      if (url.startsWith('https://')) {
-        return { action: 'allow', overrideBrowserWindowOptions: {
-          show: false,
-          webPreferences: {
-            preload: path.join(__dirname, '..', 'browser', 'preload.js'),
-            contextIsolation: false,
-            nodeIntegration: false,
-            sandbox: false
-          }
-        }};
+      if (url.startsWith('https://') || url.startsWith('http://')) {
+        this.window.loadURL(url);
       }
       return { action: 'deny' };
     });
@@ -205,6 +197,12 @@ class MainAppWindow {
     if (this.window && !this.window.isDestroyed()) {
       this.window.webContents.send(channel, ...args);
     }
+  }
+
+  navigate(url) {
+    if (!this.window || this.window.isDestroyed()) return;
+    log.info(`Navigating to external URL in-app: ${url}`);
+    this.window.loadURL(url);
   }
 
   reloadWithProfile(partition) {

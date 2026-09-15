@@ -1,4 +1,4 @@
-const { ipcRenderer, webFrame, shell } = require('electron');
+const { ipcRenderer, webFrame } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { SERVICES } = require(path.join(__dirname, '..', 'services'));
@@ -33,6 +33,7 @@ const electronAPI = {
   getActiveProfile: () => ipcRenderer.invoke('get-active-profile'),
   getActiveService: () => ipcRenderer.invoke('get-active-service'),
   switchProfile: (profileId) => ipcRenderer.invoke('switch-profile', profileId),
+  createProfile: (name) => ipcRenderer.invoke('create-profile', name),
   showNotification: (title, body, urgency) => {
     ipcRenderer.send('show-notification', { title, body, urgency });
   },
@@ -63,7 +64,6 @@ const electronAPI = {
   getServices: () => SERVICES,
   getServiceIcons: () => ICONS,
   getBrandLogo: () => brandLogo,
-  openExternal: (url) => shell.openExternal(url),
   chooseDesktopMedia: (options) => ipcRenderer.invoke('choose-desktop-media', options),
   onScreenSharingStarted: (callback) => {
     ipcRenderer.on('screen-sharing-started', (event, data) => callback(data));

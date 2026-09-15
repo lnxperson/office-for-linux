@@ -164,6 +164,17 @@ if (!gotTheLock) {
       return mainWindow ? mainWindow.currentService : config.get('defaultService');
     });
 
+    ipcMain.on('navigate', (event, url) => {
+      if (mainWindow) {
+        mainWindow.navigate(url);
+      }
+    });
+
+    ipcMain.handle('create-profile', (event, name) => {
+      const profile = profiles.createProfile(name || `Profile ${profiles.getAll().length + 1}`);
+      return profile;
+    });
+
     ipcMain.handle('switch-profile', async (event, profileId) => {
       await profiles.switchTo(profileId);
       const profile = profiles.getActive();
