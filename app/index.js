@@ -95,14 +95,17 @@ if (!gotTheLock) {
       if (mainWindow) {
         mainWindow.quitting = true;
       }
-      const partition = profiles.getActive() ? profiles.getActive().partition : config.get('partition');
-      session.fromPartition(partition)
-        .flushStorageData()
-        .then(() => app.quit())
-        .catch((err) => {
-          log.warn('Failed to flush session storage:', err);
-          app.quit();
-        });
+      try {
+        const partition = profiles.getActive() ? profiles.getActive().partition : config.get('partition');
+        const result = session.fromPartition(partition).flushStorageData();
+        if (result && typeof result.then === 'function') {
+          result.then(() => app.quit()).catch(() => app.quit());
+          return;
+        }
+      } catch (err) {
+        log.warn('Failed to flush session storage:', err);
+      }
+      app.quit();
     });
 
     notificationService.setClickHandler(() => {

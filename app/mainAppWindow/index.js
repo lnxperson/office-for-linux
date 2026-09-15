@@ -146,11 +146,13 @@ class MainAppWindow {
     }
     this.window.show();
     this.window.focus();
+    if (this.tray) this.tray.updateContextMenu();
   }
 
   hide() {
     if (this.window && !this.window.isDestroyed()) {
       this.window.hide();
+      if (this.tray) this.tray.updateContextMenu();
     }
   }
 
@@ -161,6 +163,7 @@ class MainAppWindow {
     }
     if (this.window.isVisible() && !this.window.isMinimized()) {
       this.window.hide();
+      if (this.tray) this.tray.updateContextMenu();
     } else {
       this.show();
     }

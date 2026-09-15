@@ -561,32 +561,43 @@ function getSidebarState() {
   return { pinned };
 }
 
-async function initSidebar() {
+function initSidebar() {
   const services = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
   let activeId = 'word';
-
-  if (window.electronAPI.getActiveService) {
-    try {
-      const id = await window.electronAPI.getActiveService();
-      if (id) {
-        activeId = id;
-      }
-    } catch (err) {
-      console.warn('[Office] Could not read active service:', err);
-    }
-  }
 
   injectCSS();
   createSidebar(services, activeId);
 
+  if (window.electronAPI.getActiveService) {
+    window.electronAPI.getActiveService().then((id) => {
+      if (id && sidebar) {
+        setActiveService(id);
+      }
+    }).catch(() => {});
+  }
+
   if (window.electronAPI.onServiceChanged) {
     window.electronAPI.onServiceChanged((serviceId) => {
-      setActiveService(serviceId);
+      if (sidebar) setActiveService(serviceId);
       if (pinned && sidebar) {
         reveal();
       }
     });
   }
+
+  const guard = new MutationObserver(() => {
+    if (sidebar && !document.getElementById('office-sidebar')) {
+      const servicesNow = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
+      injectCSS();
+      createSidebar(servicesNow, activeId);
+      if (window.electronAPI.getActiveService) {
+        window.electronAPI.getActiveService().then((id) => {
+          if (id && sidebar) setActiveService(id);
+        }).catch(() => {});
+      }
+    }
+  });
+  guard.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 module.exports = { initSidebar, setActiveService, getSidebarState };
