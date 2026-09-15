@@ -19,6 +19,12 @@ function extractUnreadCount(title) {
 }
 
 function initialize() {
+  const titleElement = document.querySelector('title');
+  if (!titleElement) {
+    document.addEventListener('DOMContentLoaded', initialize, { once: true });
+    return;
+  }
+
   observer = new MutationObserver(() => {
     const title = document.title;
     const count = extractUnreadCount(title);
@@ -35,7 +41,7 @@ function initialize() {
     }
   });
 
-  observer.observe(document.querySelector('title'), {
+  observer.observe(titleElement, {
     subtree: true,
     childList: true,
     characterData: true

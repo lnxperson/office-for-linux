@@ -44,22 +44,32 @@ if (!gotTheLock) {
 
     UserAgent.set(config);
 
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const relaxCsp = (details, callback) => {
+      const headers = { ...details.responseHeaders };
+      delete headers['content-security-policy'];
+      delete headers['Content-Security-Policy'];
       callback({
         responseHeaders: {
-          ...details.responseHeaders,
+          ...headers,
           'Content-Security-Policy': [
             "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;"
           ]
         }
       });
-    });
+    };
+
+    const applyCspRelaxation = (targetSession) => {
+      targetSession.webRequest.onHeadersReceived(relaxCsp);
+    };
+
+    applyCspRelaxation(session.defaultSession);
 
     const profiles = new ProfilesManager(config);
     await profiles.initialize();
 
     const activeProfile = profiles.getActive();
     const sessionPartition = activeProfile ? activeProfile.partition : config.get('partition');
+    applyCspRelaxation(session.fromPartition(sessionPartition));
 
     const notificationService = new NotificationService(config);
     const screenSharingService = new ScreenSharingService();
@@ -158,12 +168,18 @@ if (!gotTheLock) {
       await profiles.switchTo(profileId);
       const profile = profiles.getActive();
       const partition = profile ? profile.partition : config.get('partition');
+      const targetSession = session.fromPartition(partition);
+      targetSession.webRequest.onHeadersReceived(relaxCsp);
       mainWindow.reloadWithProfile(partition);
-      downloadManager.attachToSession(session.fromPartition(partition));
+      downloadManager.attachToSession(targetSession);
     });
 
     ipcMain.on('show-notification', (event, { title, body, urgency }) => {
       notificationService.show(title, body, urgency);
+    });
+
+    ipcMain.on('renderer-log', (event, message) => {
+      log.info(`[Renderer] ${message}`);
     });
 
     ipcMain.on('play-notification-sound', (event, { type }) => {

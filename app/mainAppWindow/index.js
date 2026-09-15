@@ -47,6 +47,7 @@ class MainAppWindow {
         preload: path.join(__dirname, '..', 'browser', 'preload.js'),
         contextIsolation: false,
         nodeIntegration: false,
+        sandbox: false,
         partition,
         spellcheck: true,
         spellcheckLanguages: this.config.get('spellcheckLanguages'),
@@ -68,6 +69,14 @@ class MainAppWindow {
       }
     });
 
+    this.window.on('show', () => {
+      if (this.tray) this.tray.updateContextMenu();
+    });
+
+    this.window.on('hide', () => {
+      if (this.tray) this.tray.updateContextMenu();
+    });
+
     this.window.on('close', (event) => {
       if (this.config.get('closeToTray') && this.tray && !this.quitting) {
         event.preventDefault();
@@ -86,7 +95,8 @@ class MainAppWindow {
           webPreferences: {
             preload: path.join(__dirname, '..', 'browser', 'preload.js'),
             contextIsolation: false,
-            nodeIntegration: false
+            nodeIntegration: false,
+            sandbox: false
           }
         }};
       }

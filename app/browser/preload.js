@@ -1,5 +1,6 @@
 const { ipcRenderer, webFrame, shell } = require('electron');
-const { SERVICES } = require('../services');
+const path = require('path');
+const { SERVICES } = require(path.join(__dirname, '..', 'services'));
 
 const electronAPI = {
   getConfig: () => ipcRenderer.invoke('get-config'),
@@ -42,13 +43,16 @@ const electronAPI = {
   },
   onScreenSharingStopped: (callback) => {
     ipcRenderer.on('screen-sharing-stopped', (event, data) => callback(data));
+  },
+  sendLog: (message) => {
+    ipcRenderer.send('renderer-log', message);
   }
 };
 
 globalThis.electronAPI = electronAPI;
 
 try {
-  require('./tools');
+  require(path.join(__dirname, 'tools'));
 } catch (err) {
   console.warn('[Office] Failed to load browser tools:', err.message);
 }

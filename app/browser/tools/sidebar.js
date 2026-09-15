@@ -5,18 +5,24 @@ let pinned = false;
 let isHovered = false;
 let hideTimer = null;
 
+const { webFrame } = require('electron');
+
 const SB_WIDTH = 58;
 const SB_LEFT_GAP = 10;
 const SB_OFFSET_OPEN = SB_LEFT_GAP + SB_WIDTH + 6;
 
-function injectCSS() {
-  if (document.getElementById('office-sidebar-style')) {
-    return;
+function sendLog(message) {
+  if (window.electronAPI && window.electronAPI.sendLog) {
+    window.electronAPI.sendLog(message);
   }
+  console.log(message);
+}
 
-  const style = document.createElement('style');
-  style.id = 'office-sidebar-style';
-  style.textContent = `
+let styleKey = null;
+function injectCSS() {
+  if (styleKey !== null) return;
+
+  const css = `
     :root {
       --ofs-sb-w: ${SB_WIDTH}px;
       --ofs-sb-offset: 0px;
@@ -285,7 +291,17 @@ function injectCSS() {
       transform: translateX(0);
     }
   `;
-  document.head.appendChild(style);
+
+  try {
+    styleKey = webFrame.insertCSS(css);
+    sendLog('Sidebar CSS injected via webFrame.insertCSS');
+  } catch (err) {
+    console.warn('[Office] webFrame.insertCSS failed, falling back to <style>:', err);
+    const style = document.createElement('style');
+    style.id = 'office-sidebar-style';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
 }
 
 function applyOffset() {
@@ -562,42 +578,52 @@ function getSidebarState() {
 }
 
 function initSidebar() {
-  const services = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
-  let activeId = 'word';
+  const start = () => {
+    const services = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
+    let activeId = 'word';
 
-  injectCSS();
-  createSidebar(services, activeId);
+    injectCSS();
+    createSidebar(services, activeId);
+    sendLog(`Sidebar created (${services.length} services)`);
 
-  if (window.electronAPI.getActiveService) {
-    window.electronAPI.getActiveService().then((id) => {
-      if (id && sidebar) {
-        setActiveService(id);
-      }
-    }).catch(() => {});
-  }
+    if (window.electronAPI.getActiveService) {
+      window.electronAPI.getActiveService().then((id) => {
+        if (id && sidebar) {
+          setActiveService(id);
+        }
+      }).catch(() => {});
+    }
 
-  if (window.electronAPI.onServiceChanged) {
-    window.electronAPI.onServiceChanged((serviceId) => {
-      if (sidebar) setActiveService(serviceId);
-      if (pinned && sidebar) {
-        reveal();
+    if (window.electronAPI.onServiceChanged) {
+      window.electronAPI.onServiceChanged((serviceId) => {
+        if (sidebar) setActiveService(serviceId);
+        if (pinned && sidebar) {
+          reveal();
+        }
+      });
+    }
+
+    const guard = new MutationObserver(() => {
+      if (sidebar && !document.getElementById('office-sidebar')) {
+        const servicesNow = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
+        styleKey = null;
+        injectCSS();
+        createSidebar(servicesNow, activeId);
+        if (window.electronAPI.getActiveService) {
+          window.electronAPI.getActiveService().then((id) => {
+            if (id && sidebar) setActiveService(id);
+          }).catch(() => {});
+        }
       }
     });
-  }
+    guard.observe(document.documentElement, { childList: true, subtree: true });
+  };
 
-  const guard = new MutationObserver(() => {
-    if (sidebar && !document.getElementById('office-sidebar')) {
-      const servicesNow = window.electronAPI.getServices ? window.electronAPI.getServices() : [];
-      injectCSS();
-      createSidebar(servicesNow, activeId);
-      if (window.electronAPI.getActiveService) {
-        window.electronAPI.getActiveService().then((id) => {
-          if (id && sidebar) setActiveService(id);
-        }).catch(() => {});
-      }
-    }
-  });
-  guard.observe(document.documentElement, { childList: true, subtree: true });
+  if (document.body) {
+    start();
+  } else {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  }
 }
 
 module.exports = { initSidebar, setActiveService, getSidebarState };
