@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self';">
+<title>Profiles</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #171b22;
+    color: #e8edf5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    gap: 14px;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .header .hint { font-size: 12.5px; color: #9aa5b5; }
+  #profiles { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+  .card {
+    background: #1f2630;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .name { font-size: 14.5px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .badge.active { background: rgba(0,120,212,0.25); color: #6cb6ff; }
+  .badge.signedin { background: rgba(63,185,80,0.22); color: #78d98a; }
+  .badge.signedout { background: rgba(255,255,255,0.07); color: #9aa5b5; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .actions .inactive-hint { font-size: 12px; color: #9aa5b5; align-self: center; }
+  .act {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #e8edf5;
+    background: #2a3442;
+    transition: filter 0.15s ease, background 0.15s ease;
+  }
+  .act:hover { filter: brightness(1.2); }
+  .act.switch { background: rgba(0,120,212,0.35); }
+  .act.attach { background: rgba(63,185,80,0.28); }
+  .act.detach { background: rgba(255,196,0,0.2); }
+  .act.remove { background: rgba(196,43,28,0.3); }
+  .footer { display: flex; gap: 8px; }
+  .footer input {
+    flex: 1;
+    background: #1f2630;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9px;
+    color: #e8edf5;
+    padding: 9px 12px;
+    font-size: 13px;
+    outline: none;
+  }
+  .footer input:focus { border-color: #0078d4; }
+  .footer button {
+    border: none;
+    border-radius: 9px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #0078d4;
+    color: #fff;
+  }
+  .footer button:hover { background: #0a86e6; }
+  #status { font-size: 12.5px; min-height: 16px; color: #78d98a; }
+  #status.error { color: #ff8a80; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Profiles</h1>
+    <div class="hint">Each profile keeps a separate Microsoft account session.</div>
+  </div>
+
+  <div id="profiles"></div>
+
+  <div class="footer">
+    <input id="newName" type="text" placeholder="New profile name" aria-label="New profile name">
+    <button id="createBtn">Create</button>
+  </div>
+
+  <div id="status"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

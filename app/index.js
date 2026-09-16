@@ -14,6 +14,7 @@ const ScreenSharingService = require('./modules/screenSharing');
 const ThemeManager = require('./modules/theme');
 const DeepLinkRouter = require('./modules/deepLink');
 const DownloadManager = require('./modules/downloads');
+const ProfileManagerWindow = require('./modules/profileManager');
 
 log.transports.file.level = 'info';
 log.transports.console.level = 'info';
@@ -78,6 +79,7 @@ if (!gotTheLock) {
     const deepLinkRouter = new DeepLinkRouter();
     const dbusService = new DbusService();
     const autoStart = new AutoStart(config);
+    const profileManagerWindow = new ProfileManagerWindow();
 
     await dbusService.initialize();
 
@@ -139,14 +141,29 @@ if (!gotTheLock) {
       downloadManager,
       themeManager,
       tray,
-      dbusService
+      dbusService,
+      profileManagerWindow
     });
 
     log.info('Application started successfully');
   });
 
   function registerIpcHandlers(deps) {
-    const { config, mainWindow, profiles, notificationService, tray, themeManager, dbusService } = deps;
+    const { config, mainWindow, profiles, notificationService, tray, themeManager, dbusService, downloadManager, profileManagerWindow } = deps;
+
+    const isProfileSignedIn = async (partition) => {
+      try {
+        const cookies = await session.fromPartition(partition).cookies.get({});
+        return cookies.some((c) => {
+          const domain = (c.domain || '').toLowerCase();
+          if (!domain.includes('live.com') && !domain.includes('microsoft')) return false;
+          const name = (c.name || '').toLowerCase();
+          return ['estsauth', 'msaauth', 'signinstatecookie', 'ssocookie', 'signinname'].some((k) => name.includes(k));
+        });
+      } catch (_) {
+        return false;
+      }
+    };
 
     ipcMain.handle('get-config', () => {
       return config.getAll();
@@ -173,6 +190,66 @@ if (!gotTheLock) {
     ipcMain.handle('create-profile', (event, name) => {
       const profile = profiles.createProfile(name || `Profile ${profiles.getAll().length + 1}`);
       return profile;
+    });
+
+    ipcMain.on('open-profile-manager', () => {
+      profileManagerWindow.open();
+    });
+
+    ipcMain.handle('get-profile-status', async () => {
+      const active = profiles.getActive();
+      const list = [];
+      for (const p of profiles.getAll()) {
+        list.push({
+          id: p.id,
+          name: p.name,
+          isActive: !!(active && active.id === p.id),
+          signedIn: await isProfileSignedIn(p.partition)
+        });
+      }
+      return list;
+    });
+
+    ipcMain.handle('attach-account', async (event, profileId) => {
+      const profile = profiles.getAll().find((p) => p.id === profileId);
+      if (!profile) return { ok: false, error: 'Profile not found' };
+      try { await session.fromPartition(profile.partition).clearStorageData(); } catch (_) {}
+      await profiles.switchTo(profileId);
+      const targetSession = session.fromPartition(profile.partition);
+      targetSession.webRequest.onHeadersReceived(relaxCsp);
+      mainWindow.reloadWithProfile(profile.partition);
+      downloadManager.attachToSession(targetSession);
+      mainWindow.show();
+      return { ok: true };
+    });
+
+    ipcMain.handle('detach-account', async (event, profileId) => {
+      const profile = profiles.getAll().find((p) => p.id === profileId);
+      if (!profile) return { ok: false, error: 'Profile not found' };
+      try {
+        await session.fromPartition(profile.partition).clearStorageData();
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    });
+
+    ipcMain.handle('remove-profile', async (event, profileId) => {
+      const removedActive = profiles.getActive() && profiles.getActive().id === profileId;
+      try {
+        profiles.deleteProfile(profileId);
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+      if (removedActive) {
+        const active = profiles.getActive();
+        const partition = active ? active.partition : config.get('partition');
+        const targetSession = session.fromPartition(partition);
+        targetSession.webRequest.onHeadersReceived(relaxCsp);
+        mainWindow.reloadWithProfile(partition);
+        downloadManager.attachToSession(targetSession);
+      }
+      return { ok: true };
     });
 
     ipcMain.handle('switch-profile', async (event, profileId) => {

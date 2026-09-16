@@ -97,7 +97,7 @@ function injectCSS() {
 
     #office-sidebar {
       position: fixed;
-      top: ${SB_PADDING}px;
+      top: ${TB_HEIGHT + SB_PADDING}px;
       bottom: ${SB_PADDING}px;
       left: ${SB_PADDING}px;
       width: ${SB_WIDTH}px;
@@ -522,27 +522,11 @@ function createSidebar(services, activeId) {
   const profileBtn = document.createElement('button');
   profileBtn.id = 'office-profile-btn';
   profileBtn.textContent = '\u{1F464}';
-  profileBtn.title = 'Switch profile';
-  profileBtn.addEventListener('mouseenter', () => showTooltip(profileBtn, 'Switch profile'));
+  profileBtn.title = 'Manage profiles';
+  profileBtn.addEventListener('mouseenter', () => showTooltip(profileBtn, 'Manage profiles'));
   profileBtn.addEventListener('mouseleave', hideTooltip);
-  profileBtn.addEventListener('click', async () => {
-    try {
-      if (!window.electronAPI.switchProfile || !window.electronAPI.getProfiles) return;
-      const profiles = await window.electronAPI.getProfiles();
-      if (!profiles || profiles.length === 0) return;
-      const current = await window.electronAPI.getActiveProfile();
-      const curId = current && current.id ? current.id : profiles[0].id;
-      if (profiles.length === 1 && window.electronAPI.createProfile) {
-        const created = await window.electronAPI.createProfile(`Profile ${profiles.length + 1}`);
-        if (created && created.id) window.electronAPI.switchProfile(created.id);
-        return;
-      }
-      const index = profiles.findIndex((p) => p.id === curId);
-      const next = profiles[(index + 1) % profiles.length];
-      if (next.id !== curId) window.electronAPI.switchProfile(next.id);
-    } catch (err) {
-      console.warn('[Office] Profile switch failed:', err);
-    }
+  profileBtn.addEventListener('click', () => {
+    if (window.electronAPI.openProfileManager) window.electronAPI.openProfileManager();
   });
   footer.appendChild(profileBtn);
 

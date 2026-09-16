@@ -34,6 +34,7 @@ const electronAPI = {
   getActiveService: () => ipcRenderer.invoke('get-active-service'),
   switchProfile: (profileId) => ipcRenderer.invoke('switch-profile', profileId),
   createProfile: (name) => ipcRenderer.invoke('create-profile', name),
+  openProfileManager: () => ipcRenderer.send('open-profile-manager'),
   showNotification: (title, body, urgency) => {
     ipcRenderer.send('show-notification', { title, body, urgency });
   },
