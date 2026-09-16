@@ -24,7 +24,10 @@
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 12px;
     padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
+  .card:hover { border-color: #0078d4; background: #232b37; }
   .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .name { font-size: 14.5px; font-weight: 600; }
   .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
@@ -45,10 +48,10 @@
     transition: filter 0.15s ease, background 0.15s ease;
   }
   .act:hover { filter: brightness(1.2); }
-  .act.switch { background: rgba(0,120,212,0.35); }
-  .act.attach { background: rgba(63,185,80,0.28); }
-  .act.detach { background: rgba(255,196,0,0.2); }
-  .act.remove { background: rgba(196,43,28,0.3); }
+  .act.signin { background: rgba(0,120,212,0.35); }
+  .act.signout { background: rgba(196,43,28,0.4); color: #ffb3ab; }
+  .act.remove { background: rgba(255,255,255,0.08); color: #9aa5b5; }
+  .act.remove:hover { background: rgba(196,43,28,0.4); color: #ffb3ab; }
   .footer { display: flex; gap: 8px; }
   .footer input {
     flex: 1;

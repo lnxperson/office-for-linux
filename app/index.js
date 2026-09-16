@@ -1,4 +1,4 @@
-const { app, ipcMain, session, nativeTheme } = require('electron');
+const { app, ipcMain, session, nativeTheme, BrowserWindow } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const AppConfiguration = require('./appConfiguration');
@@ -28,6 +28,24 @@ if (!gotTheLock) {
   let tray = null;
   const config = AppConfiguration.load();
 
+  const relaxCsp = (details, callback) => {
+    const headers = { ...details.responseHeaders };
+    delete headers['content-security-policy'];
+    delete headers['Content-Security-Policy'];
+    callback({
+      responseHeaders: {
+        ...headers,
+        'Content-Security-Policy': [
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;"
+        ]
+      }
+    });
+  };
+
+  const applyCspRelaxation = (targetSession) => {
+    targetSession.webRequest.onHeadersReceived(relaxCsp);
+  };
+
   app.on('second-instance', () => {
     if (mainWindow) {
       mainWindow.show();
@@ -44,24 +62,6 @@ if (!gotTheLock) {
     app.setAppUserModelId('com.officeforlinux');
 
     UserAgent.set(config);
-
-    const relaxCsp = (details, callback) => {
-      const headers = { ...details.responseHeaders };
-      delete headers['content-security-policy'];
-      delete headers['Content-Security-Policy'];
-      callback({
-        responseHeaders: {
-          ...headers,
-          'Content-Security-Policy': [
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;"
-          ]
-        }
-      });
-    };
-
-    const applyCspRelaxation = (targetSession) => {
-      targetSession.webRequest.onHeadersReceived(relaxCsp);
-    };
 
     applyCspRelaxation(session.defaultSession);
 
@@ -210,24 +210,85 @@ if (!gotTheLock) {
       return list;
     });
 
-    ipcMain.handle('attach-account', async (event, profileId) => {
+    const loginWindows = new Map();
+
+    ipcMain.handle('sign-in-profile', async (event, profileId) => {
       const profile = profiles.getAll().find((p) => p.id === profileId);
       if (!profile) return { ok: false, error: 'Profile not found' };
-      try { await session.fromPartition(profile.partition).clearStorageData(); } catch (_) {}
-      await profiles.switchTo(profileId);
-      const targetSession = session.fromPartition(profile.partition);
-      targetSession.webRequest.onHeadersReceived(relaxCsp);
-      mainWindow.reloadWithProfile(profile.partition);
-      downloadManager.attachToSession(targetSession);
-      mainWindow.show();
-      return { ok: true };
+
+      const partition = profile.partition;
+      const existing = loginWindows.get(partition);
+      if (existing && !existing.isDestroyed()) {
+        existing.show();
+        existing.focus();
+        return { ok: true, opened: false };
+      }
+
+      applyCspRelaxation(session.fromPartition(partition));
+      downloadManager.attachToSession(session.fromPartition(partition));
+
+      const loginWindow = new BrowserWindow({
+        width: 520,
+        height: 680,
+        show: false,
+        title: `Sign in — ${profile.name}`,
+        backgroundColor: '#ffffff',
+        autoHideMenuBar: true,
+        webPreferences: {
+          preload: path.join(__dirname, 'browser', 'preload.js'),
+          contextIsolation: false,
+          nodeIntegration: false,
+          sandbox: false,
+          partition
+        }
+      });
+
+      loginWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('https://') || url.startsWith('http://')) {
+          loginWindow.loadURL(url);
+        }
+        return { action: 'deny' };
+      });
+
+      loginWindows.set(partition, loginWindow);
+
+      const poll = setInterval(async () => {
+        if (loginWindow.isDestroyed()) {
+          clearInterval(poll);
+          loginWindows.delete(partition);
+          return;
+        }
+        if (await isProfileSignedIn(partition)) {
+          clearInterval(poll);
+          loginWindows.delete(partition);
+          if (!loginWindow.isDestroyed()) loginWindow.destroy();
+          profileManagerWindow.refresh();
+        }
+      }, 1500);
+
+      loginWindow.on('closed', () => {
+        clearInterval(poll);
+        if (loginWindows.get(partition) === loginWindow) loginWindows.delete(partition);
+        profileManagerWindow.refresh();
+      });
+
+      loginWindow.once('ready-to-show', () => loginWindow.show());
+
+      await loginWindow.loadURL('https://login.live.com');
+      return { ok: true, opened: true };
     });
 
-    ipcMain.handle('detach-account', async (event, profileId) => {
+    ipcMain.handle('sign-out-profile', async (event, profileId) => {
       const profile = profiles.getAll().find((p) => p.id === profileId);
       if (!profile) return { ok: false, error: 'Profile not found' };
+      const partition = profile.partition;
+      const login = loginWindows.get(partition);
+      if (login && !login.isDestroyed()) {
+        login.destroy();
+        loginWindows.delete(partition);
+      }
       try {
-        await session.fromPartition(profile.partition).clearStorageData();
+        await session.fromPartition(partition).clearStorageData();
         return { ok: true };
       } catch (err) {
         return { ok: false, error: err.message };

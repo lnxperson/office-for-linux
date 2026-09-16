@@ -11,6 +11,7 @@ class ProfileManagerWindow {
       if (this.window.isMinimized()) this.window.restore();
       this.window.show();
       this.window.focus();
+      this.refresh();
       return;
     }
 
@@ -39,6 +40,12 @@ class ProfileManagerWindow {
     this.window.on('closed', () => {
       this.window = null;
     });
+  }
+
+  refresh() {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.webContents.send('profiles-updated');
+    }
   }
 }
 
